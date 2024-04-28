@@ -7,7 +7,7 @@ import socketId from '../components/logicComponent/socketId';
 import { IconButton, Box } from '@mui/material';
 import ReplyIcon from '@mui/icons-material/Reply';
 import { useDataFetching } from '../components/logicComponent/fetchData'
-import Message from './Message'
+import Message from './Message';
 const SERVER_URL = `http://${ENV.env.ipv4}:5000`;
 const ChatScreen = () => {
     const messages = useSelector((state) => state.data.message)

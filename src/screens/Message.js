@@ -9,8 +9,12 @@ import { IconButton } from '@mui/material';
 import ReplyIcon from '@mui/icons-material/Reply';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import * as ENV from '../env';
+import DialogFile from '../components/blockComponent/DialogFile'
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import GetAppIcon from '@mui/icons-material/GetApp';
 const SERVER_URL = `http://${ENV.env.ipv4}:5000`
 const Message = ({ message }) => {
+    const name = message.fileName
     const [messages, setMessages] = useState([]);
     const [users, setUsers] = useState([]);
     const [cookies] = useCookies(['user']);
@@ -22,14 +26,16 @@ const Message = ({ message }) => {
     const socket = socketId
     const [viewIndex, setViewIndex] = useState(0);
     const messageCheck = messages.filter((mess) => mess.replyMessageId === message._id)
-    const [isView, setIsView] = useState(false)
+    const [isView, setIsView] = useState(false);
+    const [open, setOpen] = useState(false)
+    const [viewFile, setViewFile] = useState(null)
     useEffect(() => {
-        if(messageCheck) {
-            if(viewIndex < messageCheck.length) {
+        if (messageCheck) {
+            if (viewIndex < messageCheck.length) {
                 setIsView(true)
             }
-    
-            if(viewIndex >= messageCheck.length) {
+
+            if (viewIndex >= messageCheck.length) {
                 setIsView(false)
             }
         }
@@ -79,14 +85,37 @@ const Message = ({ message }) => {
         setViewIndex(prevIndex => prevIndex + 3);
     }
 
+    const viewFileMessage = (file) => {
+        setOpen(true)
+        setViewFile(file)
+    }
+
     const messageRepling = messages
         .filter((mess) => mess.replyMessageId === message._id)
         .slice(0, viewIndex)
         .map((messRep) => <MessageReply key={messRep._id} messageId={messRep._id} />);
 
     const user = users.find((u) => u._id === message.senderUser);
+    const handleDownload = (file) => {
+        const downloadUrl = `${SERVER_URL}/uploads/${file}`;
+
+        fetch(downloadUrl)
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${name}.${file.split('.').pop().toLowerCase()}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => console.error('Download failed:', error));
+    }
     return (
-        <div key={message._id} style={{ borderBottom: 'solid 1px grey', padding: "10px" }}>
+        <div style={{ borderBottom: 'solid 1px grey', padding: "10px" }}>
+            <DialogFile open={open} handleClose={() => { setOpen(false); setViewFile(null) }} file={viewFile} />
             <div>
                 <strong><img src={user ? `${SERVER_URL}/uploads/${user.avatar}` : `${SERVER_URL}/uploads/user.png`} alt="Image" width="40" height="40" style={{ borderRadius: "10px" }} /> {user ? user.name : ''}  </strong>
                 <br />
@@ -96,11 +125,34 @@ const Message = ({ message }) => {
                     {message.file && (
                         <>
                             {(['jpg', 'png'].includes(message.file.split('.').pop().toLowerCase())) ? (
-                                <img src={`${SERVER_URL}/uploads/${message.file}`} alt="Image" width="200" />
-                            ) : (
-                                <video width="200" controls>
-                                    <source src={`${SERVER_URL}/uploads/${message.file}`} type="video/mp4" controls />
+                                <img src={`${SERVER_URL}/uploads/${message.file}`} alt="Image" width="200" style={{ cursor: 'pointer' }} onClick={() => viewFileMessage(message.file)} />
+                            ) : (['mp4'].includes(message.file.split('.').pop().toLowerCase())) ? (
+                                <video width="200" autoPlay={true} muted={true} style={{ cursor: 'pointer' }} onClick={() => viewFileMessage(message.file)}>
+                                    <source src={`${SERVER_URL}/uploads/${message.file}`} type="video/mp4" />
                                 </video>
+                            ) : (
+                                (
+                                    <div style={{ display: 'flex' }}>
+                                        <div style={{
+                                            width: '100px',
+                                            height: '120px',
+                                            border: '1px solid grey',
+                                            borderRadius: '5px',
+                                            margin: '10px',
+                                            display: 'flex',
+                                            overflow: 'hidden',
+                                            alignItems: 'center',
+                                            padding: '5px',
+                                            cursor: 'pointer',
+                                            backgroundColor: '#f5f5f5'
+                                        }}
+                                        onClick={() => handleDownload(message.file)}>
+                                            <div style={{ marginRight: '5px', alignSelf: 'start' }}><AttachFileIcon style={{ color: 'grey' }} /></div>
+                                            <div style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', alignSelf: 'start' }}>{message.fileName && message.fileName}</div>
+                                        </div>
+                                        <Button onClick={() => handleDownload(message.file)} style={{}}><GetAppIcon sx={{color: 'grey'}}/></Button>
+                                    </div>
+                                )
                             )}
                         </>
                     )}

@@ -12,6 +12,7 @@ import DialogCustom from '../components/blockComponent/DialogCustom';
 import DialogCustomThreads from '../components/blockComponent/DialogCustomThreads'
 import * as ENV from '../env';
 import SearchChannel from './SearchChannel';
+import Badge from '@mui/material/Badge';
 import InfoUser from '../components/blockComponent/InfoUser';
 import WaitingConference from './WaitingConference';
 import WaitingCall from './WaitingCall'
@@ -20,13 +21,15 @@ import { useDataFetching } from '../components/logicComponent/fetchData';
 import { offConference, offCall } from '../store/Slice/roomSlice';
 import socket from '../components/logicComponent/socketId';
 import { useNavigate } from 'react-router-dom';
-import ListUserGroup from '../components/blockComponent/ListUserGroup'
+import { updated } from '../services/apiCustomer'
+import ListUserGroup from '../components/blockComponent/ListUserGroup';
 const SERVER_URL = `http://${ENV.env.ipv4}:5000`
 const HomeScreen = () => {
   const [cookies, removeCookie] = useCookies(['user']);
   const groups = useSelector((state) => state.data.group)
   const topics = useSelector((state) => state.data.topic)
   const groupMember = useSelector((state) => state.data.member)
+  const messageData = useSelector((state) => state.data.message)
   const [isOpenCreateTopic, setIsOpenCreateTopic] = useState(false);
   const [isOpenJoinGroup, setIsOpenJoinGroup] = useState(false);
   const [isDirect, setIsDirect] = useState(true);
@@ -42,6 +45,13 @@ const HomeScreen = () => {
     var groupMemberFilter = groupMember.filter((item) => item.idMember === cookies.user._id);
   }
 
+  const [messages, setMessages] = useState([])
+  useEffect(() => {
+    if (messageData) {
+      setMessages(messageData)
+    }
+  }, [messageData])
+
   const statusConference = useSelector((state) => state.room.conference);
   const statusCall = useSelector((state) => state.room.call)
   const { enqueueSnackbar } = useSnackbar();
@@ -51,7 +61,7 @@ const HomeScreen = () => {
     height: window.innerHeight
   });
   const { width } = windowDimensions;
-  const { fetchGroup, fetchTopic, fetchMember } = useDataFetching();
+  const { fetchGroup, fetchTopic, fetchMember, fetchMessage } = useDataFetching();
 
   const logout = async (data) => {
     if (data._id === cookies.user._id) {
@@ -136,6 +146,25 @@ const HomeScreen = () => {
   // useEffect(() => {
   //   fetchData();
   // }, [])
+  const handleChoiseTopic = async (topic) => {
+    try {
+      setIdTopic(topic._id);
+      const messageGroup = messages && messages.filter((message) =>
+        message.receiverChannel === topic.idGroup &&
+        message.receiverGroup === topic._id &&
+        !message.send.find(e => e.userId === cookies.user._id)
+      );
+
+      await Promise.all(messageGroup.map(async (message) => {
+        const updatedSend = [...message.send, { userId: cookies.user._id }];
+        await updated(message._id, { send: updatedSend }, 'messages');
+      }));
+
+      fetchMessage();
+    } catch (error) {
+      console.error('Lỗi khi xử lý chủ đề:', error);
+    }
+  };
 
   useEffect(() => {
     if (topics) {
@@ -144,7 +173,7 @@ const HomeScreen = () => {
 
     setTopicFilter(topicFilter);
     if (topicFilter && topicFilter.length !== 0) {
-      setIdTopic(topicFilter[0]._id);
+      handleChoiseTopic(topicFilter[0]);
     }
   }, [idGroup, topics]);
 
@@ -197,11 +226,18 @@ const HomeScreen = () => {
     setIdGroup(id)
   }
 
+
   const fetchData = () => {
     fetchGroup();
     fetchMember();
     fetchTopic();
   }
+
+  useEffect(() => {
+    socket.on('Message', () => {
+      fetchMessage();
+    })
+  }, [])
 
   return (
     <div style={{
@@ -303,30 +339,38 @@ const HomeScreen = () => {
 
           {groupMemberFilter && groupMemberFilter.map((group) => {
             const nameGroup = groups && groups.find((item) => item._id === group.idGroup)
+            if (messages) {
+              var messageGroup = messages && messages.filter((message) => message.receiverChannel === group.idGroup && !message.send.find(e => e.userId === cookies.user._id))
+            }
+
             return (
-              <ItemGroup
-                key={group._id}
-                onClick={() => choiseChannel(group.idGroup)}
-                style={{
-                  backgroundColor: '#0950CD',
-                  borderRadius: (idGroup === group.idGroup) ? '20px' : '90px',
-                  padding: '3px',
-                  border: (idGroup === group.idGroup) ? 'solid 3px #f5f5f5' : 'solid 0px white',
-                  transition: 'border-radius 0.1s ease',
-                  justifyContent: 'center',
-                  display: 'flex',
-                  alignItems: 'center',
-                  color: 'white',
-                  cursor: 'pointer',
-                  height: `${width * 0.05}px`,
-                  width: `${width * 0.05}px`,
-                  fontSize: `${width * 0.01}px`,
-                  overflow: 'hidden'
-                }}
-                elevation={24}
-              >
-                {nameGroup && nameGroup.nameGroup}
-              </ItemGroup>
+              <Badge badgeContent={messageGroup?.length} color="error" style={{ marginTop: '10px' }}>
+                <ItemGroup
+                  key={group._id}
+                  onClick={() => choiseChannel(group.idGroup)}
+                  style={{
+                    margin: '0px',
+                    backgroundColor: '#0950CD',
+                    borderRadius: (idGroup === group.idGroup) ? '20px' : '90px',
+                    padding: '3px',
+                    border: (idGroup === group.idGroup) ? 'solid 3px #f5f5f5' : 'solid 0px white',
+                    transition: 'border-radius 0.1s ease',
+                    justifyContent: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: 'white',
+                    cursor: 'pointer',
+                    height: `${width * 0.05}px`,
+                    width: `${width * 0.05}px`,
+                    fontSize: `${width * 0.01}px`,
+                    overflow: 'hidden'
+                  }}
+                  elevation={24}
+                >
+                  {nameGroup && nameGroup.nameGroup}
+                </ItemGroup>
+              </Badge>
+
 
             )
           })}
@@ -453,6 +497,7 @@ const HomeScreen = () => {
                       flexGrow: 1,
                       overflow: "auto",
                       scrollbarWidth: 'none',
+                      marginTop: '10px',
                       '&::-webkit-scrollbar': {
                         display: 'none',
                       },
@@ -460,34 +505,52 @@ const HomeScreen = () => {
                         display: 'none',
                       },
                     }}>
-                      {topicFilter.map((topic) => (
-                        <Paper
-                          key={topic._id}
-                          elevation={6}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            height: `${width * 0.03}px`,
-                            width: `${width * 0.15}px`,
-                            fontSize: `${width * 0.01}px`,
-                            cursor: 'pointer',
-                            color: idTopic === topic._id ? 'black' : 'white',
-                            backgroundColor: idTopic === topic._id ? '#fbb700' : '#0950CD',
-                            fontWeight: 'bolder',
-                            borderRadius: '0px',
-                            paddingLeft: '20px'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#fbb700';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = idTopic === topic._id ? '#fbb700' : '#0950CD';
-                          }}
-                          onClick={() => setIdTopic(topic._id)}
-                        >
-                          #  {topic.nameTopicGroup}
-                        </Paper>
-                      ))}
+                      {topicFilter.map((topic) => {
+                        if (messages) {
+                          var messageGroup = messages && messages.filter((message) => message.receiverChannel === topic.idGroup && message.receiverGroup === topic._id && !message.send.find(e => e.userId === cookies.user._id))
+                          console.log(messageGroup)
+                          console.log(messageGroup?.length)
+                        }
+                        return (
+                          <Badge
+                            badgeContent={messageGroup?.length}
+                            color="error"
+                            sx={{
+                              '& .MuiBadge-badge': {
+                                marginRight: '35px',
+                                marginTop: '20px'
+                              },
+                            }}
+                          >
+                            <Paper
+                              key={topic._id}
+                              elevation={6}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                height: `${width * 0.03}px`,
+                                width: `${width * 0.15}px`,
+                                fontSize: `${width * 0.01}px`,
+                                cursor: 'pointer',
+                                color: idTopic === topic._id ? 'black' : 'white',
+                                backgroundColor: idTopic === topic._id ? '#fbb700' : '#0950CD',
+                                fontWeight: 'bolder',
+                                borderRadius: '0px',
+                                paddingLeft: '20px',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = '#fbb700';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = idTopic === topic._id ? '#fbb700' : '#0950CD';
+                              }}
+                              onClick={() => handleChoiseTopic(topic)}
+                            >
+                              #  {topic.nameTopicGroup}
+                            </Paper>
+                          </Badge>
+                        )
+                      })}
                     </div>
                   </>
                 ) : (
@@ -522,7 +585,7 @@ const HomeScreen = () => {
           </div>
         )}
       </div>
-    </div>
+    </div >
   )
 };
 

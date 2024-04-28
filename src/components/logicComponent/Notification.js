@@ -12,6 +12,8 @@ const Notification = () => {
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const [cookies, setCookie] = useCookies(['user']);
     const [isInPage, setIsInPage] = useState(true);
+    const idChatRoom = useSelector((state) => state.room.room);
+    const idTopic = useSelector((state) => state.group.topic);
     const user = useSelector((state) => state.data.user);
     const member = useSelector((state) => state.data.member);
     const group = useSelector((state) => state.data.group);
@@ -51,7 +53,7 @@ const Notification = () => {
     window.addEventListener('blur', handleBlur);
     window.addEventListener('focus', handleFocus);
     const handleMessageDirect = (data) => {
-        if (data.receiverUser === cookies.user._id) {
+        if (data.receiverUser === cookies.user._id && data.senderUser !== idChatRoom) {
             enqueueSnackbar(
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     {user && (
@@ -79,7 +81,7 @@ const Notification = () => {
     const handleMessage = (data) => {
         if (member && group && user) {
             const find = member.find((item) => item.idMember === cookies.user._id && item.idGroup === data.receiverChannel)
-            if (find) {
+            if (find && data.receiverGroup !== idTopic) {
                 enqueueSnackbar(
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                         <img

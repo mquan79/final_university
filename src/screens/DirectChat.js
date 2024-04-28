@@ -61,7 +61,7 @@ const DirectChat = () => {
     };
 
     useEffect(() => {
-        socket.on('Message', () => {
+        socket.on('Message direct', () => {
             fetchData();
         });
     }, []);

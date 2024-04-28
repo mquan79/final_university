@@ -10,6 +10,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import SearchIcon from '@mui/icons-material/Search';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import Badge from '@mui/material/Badge';
 import * as ENV from '../env';
 import socket from '../components/logicComponent/socketId'
 import { useDataFetching } from '../components/logicComponent/fetchData'
@@ -17,6 +18,8 @@ const SERVER_URL = `http://${ENV.env.ipv4}:5000`;
 const RoomChatScreen = () => {
     const [cookies, setCookie] = useCookies(['user']);
     const allFriend = useSelector((state) => state.data.friend);
+    const [messages, setMessages] = useState([])
+    const messagesA = useSelector((state) => state.data.message)
     const [text, setText] = useState('');
     const users = useSelector((state) => state.data.user)
     const [search, setSearch] = useState('');
@@ -30,6 +33,25 @@ const RoomChatScreen = () => {
         width: window.innerWidth,
         height: window.innerHeight
     });
+    useEffect(() => {
+        // const handleUpdateMessage = async(message) => {
+        //     await fetchMessage();
+        //     const updatedSend = [...message.send, { userId: cookies.user._id }];
+        //     await updated(message._id, { send: updatedSend }, 'messages');
+        // }
+        socket.on('Message direct', (data) => {
+            if(data.senderUser !== idChatRoom) {
+                fetchMessage();
+            }
+        })
+    }, [])
+
+    useEffect(() => {
+        if(messagesA) {
+            setMessages(messagesA)
+        }
+    }, [messagesA])
+
     const [friends, setFriends] = useState([]);
     const getUserById = (id) => {
         const user = users && users.find((user) => user._id === id);
@@ -59,7 +81,7 @@ const RoomChatScreen = () => {
 
 
     }, [allFriend, text])
-    const { fetchFriend } = useDataFetching();
+    const { fetchFriend, fetchMessage } = useDataFetching();
     const { width } = windowDimensions;
     console.log(width)
     useEffect(() => {
@@ -169,26 +191,48 @@ const RoomChatScreen = () => {
         }
     };
 
-    const handleChatRoom = (id) => {
+    const handleChatRoom = async (id) => {
+        const messageGroup = messages && messages.filter((message) =>
+            message.senderUser === id &&
+            message.receiverUser === cookies.user._id &&
+            !message.send.find(e => e.userId === cookies.user._id))
+        console.log(messageGroup)
+
+        await Promise.all(messageGroup.map(async (message) => {
+            const updatedSend = [...message.send, { userId: cookies.user._id }];
+            await updated(message._id, { send: updatedSend }, 'messages');
+        }));
+
+        fetchMessage();
         dispatch(setRoom(id))
+
     }
 
 
-    const Friend = ({ id }) => {
+    const Friend = ({ id, length }) => {
         const user = users && users.find((user) => user._id === id);
         return (
-            <div style={{
-                margin: '10px',
-                border: 'solid 1px black',
-                borderRadius: '5px',
-                padding: '5px',
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: '#f5f5f5'
-            }}>
-                <img src={`${SERVER_URL}/uploads/${user.avatar ? user.avatar : 'user.png'}`} alt="Image" width={width * 0.03} style={{ borderRadius: '90px', marginRight: '5px' }} />
-                {width > 765 && (user ? user.name : 'unknown')}
-            </div>
+            <Badge badgeContent={length} color="error">
+                <div style={{
+                    border: '1px solid black',
+                    borderRadius: '5px',
+                    padding: '5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    backgroundColor: '#f5f5f5',
+                    width: '10vw',
+                    marginBottom: '10px'
+                }}>
+                    <img
+                        src={`${SERVER_URL}/uploads/${user.avatar ? user.avatar : 'user.png'}`}
+                        alt="Avatar"
+                        width={width * 0.03}
+                        style={{ borderRadius: '50%', marginRight: '5px' }}
+                    />
+                    {width > 765 && (user ? user.name : 'unknown')}
+                </div>
+            </Badge>
+
         )
     }
 
@@ -232,14 +276,15 @@ const RoomChatScreen = () => {
                             <div>
                                 <strong style={{ color: 'white' }}>Tìm kiếm</strong>
                                 <div style={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center' }}>
-                                <TextField type='text' onChange={(e) => setText(e.target.value)} value={text} style={{ marginTop: '20px', backgroundColor: '#f5f5f5', borderRadius: '4px', }} />
-                                <SearchIcon style={{ cursor: 'pointer', width: '20%', color: 'white' }} onClick={handleSearch} />
+                                    <TextField type='text' onChange={(e) => setText(e.target.value)} value={text} style={{ marginTop: '20px', backgroundColor: '#f5f5f5', borderRadius: '4px', }} />
+                                    <SearchIcon style={{ cursor: 'pointer', width: '20%', color: 'white' }} onClick={handleSearch} />
                                 </div>
 
                             </div>
                         </>
                     }
                     <Box sx={{
+                        height: '100%',
                         flexGrow: 1,
                         overflow: "auto",
                         p: 2,
@@ -253,10 +298,26 @@ const RoomChatScreen = () => {
                     }}>
 
                         {friends && friends.map((friend) => {
+                            if (messages) {
+                                var messageGroup = messages && messages.filter((message) => {
+                                    const fromFriend1ToUser = message.senderUser === friend.idUser1 && message.receiverUser === cookies.user._id;
+                                    const fromUserToFriend1 = message.senderUser === cookies.user._id && message.receiverUser === friend.idUser1;
+                                    const fromFriend2ToUser = message.senderUser === friend.idUser2 && message.receiverUser === cookies.user._id;
+                                    const fromUserToFriend2 = message.senderUser === cookies.user._id && message.receiverUser === friend.idUser2;
+
+                                    const sentByCurrentUser = message.senderUser === cookies.user._id;
+                                    const notSentByCurrentUser = !message.send.find(e => e.userId === cookies.user._id);
+
+                                    return (fromFriend1ToUser || fromUserToFriend1 || fromFriend2ToUser || fromUserToFriend2) && notSentByCurrentUser;
+                                });
+
+                            }
                             return (
                                 <div key={friend._id} style={{
                                     cursor: "pointer",
-                                }} onClick={() => handleChatRoom(friend.idUser1 === cookies.user._id ? friend.idUser2 : friend.idUser1)}>{friend.idUser1 === cookies.user._id ? <Friend id={friend.idUser2} /> : <Friend id={friend.idUser1} />}</div>
+                                }} onClick={() => handleChatRoom(friend.idUser1 === cookies.user._id ? friend.idUser2 : friend.idUser1)}>
+                                    {friend.idUser1 === cookies.user._id ? <Friend id={friend.idUser2} length={messageGroup?.length} /> : <Friend id={friend.idUser1} length={messageGroup?.length} />}
+                                </div>
                             )
                         })}
                     </Box>

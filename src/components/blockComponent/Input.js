@@ -2,12 +2,13 @@ import React, { useState, useRef } from 'react';
 import { useCookies } from 'react-cookie';
 import { add } from '../../services/apiCustomer';
 import { useSelector } from 'react-redux';
-import socketId from '../logicComponent/socketId'; 
+import socketId from '../logicComponent/socketId';
 import * as ENV from '../../env';
 import SpeechToText from './SpeechToText';
 import { useNavigate } from 'react-router-dom';
 import { TextField, IconButton, InputAdornment, Dialog, DialogContent } from '@mui/material';
 import { PhotoCamera, Send as SendIcon, VideoCameraFront as VideoCameraFrontIcon, Mic as MicIcon } from '@mui/icons-material';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch } from 'react-redux';
 import { onConference } from '../../store/Slice/roomSlice'
@@ -21,7 +22,7 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
     const idTopic = useSelector((state) => state.group.topic);
     const idGroup = useSelector((state) => state.group.group);
     const inputRef = useRef(null);
-    const socket = socketId; 
+    const socket = socketId;
     const [openSTT, setOpenSTT] = useState(false);
     const dispatch = useDispatch();
     const handleSend = async () => {
@@ -33,12 +34,19 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
                 return;
             }
 
+            console.log('FILE NAME', file.name)
             messageFormat = {
                 senderUser: cookies.user._id,
                 receiverGroup: idTopic,
                 receiverChannel: idGroup,
+                send: [
+                    {
+                        userId: cookies.user._id
+                    }
+                ],
                 content: messageContent,
                 file: file ? `${Date.now()}.${typeOfFile}` : null,
+                fileName: file && file.name,
                 time: new Date(),
                 replyMessageId: replyMess?._id,
             };
@@ -62,14 +70,7 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
         setFile(selectedFile);
         const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
         setTypeOfFile(fileExtension);
-
-        if (!['jpg', 'png', 'mp4'].includes(fileExtension)) {
-            alert('Vui lòng chọn file ảnh hoặc video!!!');
-            setFile(null);
-            setTypeOfFile(null);
-        }
     };
-
 
     const handleUpload = async () => {
         if (!file) {
@@ -128,6 +129,7 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
         )
     }
 
+
     return (
         <div style={{ display: 'flex', alignItems: 'center', width: '100%', paddingBottom: '20px' }}>
             <Speech />
@@ -138,7 +140,7 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
                 value={text}
                 style={{
                     flexGrow: 1,
-                    wordWrap: 'break-word', 
+                    wordWrap: 'break-word',
                     whiteSpace: 'pre-wrap',
                     overflowY: 'auto'
                 }}
@@ -148,11 +150,29 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
                     startAdornment: file && (
                         <InputAdornment position="start">
                             {(['jpg', 'png'].includes(typeOfFile)) ? (
-                                <img src={URL.createObjectURL(file)} alt="Image" width="50" />
+                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <img src={URL.createObjectURL(file)} alt="Image" width="50" />
+                                    <button onClick={() => setFile(null)} style={closeButtonStyle}>X</button>
+                                </div>
+                            ) : (['mp4'].includes(typeOfFile)) ? (
+                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <video width="100" muted={true} autoPlay={true}>
+                                        <source src={URL.createObjectURL(file)} type="video/mp4" />
+                                    </video>
+                                    <button onClick={() => setFile(null)} style={closeButtonStyle}>X</button>
+                                </div>
                             ) : (
-                                <video width="50" controls>
-                                    <source src={URL.createObjectURL(file)} type="video/mp4" />
-                                </video>
+                                <div style={{
+                                    border: 'solid 1px grey',
+                                    padding: '5px',
+                                    borderRadius: '5px',
+                                    margin: '10px',
+                                    position: 'relative',
+                                    display: 'inline-block'
+                                }}>
+                                    <AttachFileIcon style={{ color: 'grey' }} /> {file.name}
+                                    <button onClick={() => setFile(null)} style={closeButtonStyle}>X</button>
+                                </div>
                             )}
                         </InputAdornment>
                     )
@@ -165,9 +185,21 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
             />
+
+            <input
+                id="icon-button-file-word"
+                type="file"
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+            />
             <label htmlFor="icon-button-file">
                 <IconButton component="span">
                     <PhotoCamera style={{ color: '#0950CD' }} />
+                </IconButton>
+            </label>
+            <label htmlFor="icon-button-file-word">
+                <IconButton component="span">
+                    <AttachFileIcon style={{ color: '#0950CD' }} />
                 </IconButton>
             </label>
             <IconButton onClick={handleSend}>
@@ -187,88 +219,17 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
 };
 
 export default Input;
-
-
-
-// <div style={{ display: 'flex', alignItems: 'center', width: '90%' }}>
-//     <Speech />
-//     <TextField
-//         type="text"
-//         inputRef={inputRef}
-//         onChange={() => setText(inputRef.current.value)}
-//         value={text}
-//         style={{
-//             flexGrow: 1
-//         }}
-
-//         InputProps={{
-//             style: { color: 'white' },
-//             startAdornment: file && (
-//                 <InputAdornment position="start">
-//                     {(['jpg', 'png'].includes(typeOfFile)) ? (
-//                         <img src={URL.createObjectURL(file)} alt="Image" width="50" />
-//                     ) : (
-//                         <video width="50" controls>
-//                             <source src={URL.createObjectURL(file)} type="video/mp4" />
-//                         </video>
-//                     )}
-//                 </InputAdornment>
-//             )
-//         }}
-//     />
-//     <input
-//         accept="image/*,video/*"
-//         id="icon-button-file"
-//         type="file"
-//         onChange={handleFileChange}
-//         style={{ display: 'none' }}
-//     />
-//     <label htmlFor="icon-button-file" style={{ alignSelf: 'center', cursor: 'pointer', width: '24px', display: 'ruby' }}>
-//         <div aria-label="upload picture" component="span" style={{ padding: '0px', marginLeft: '10px', width: '24px' }}>
-//             <PhotoCamera style={{
-//                 backgroundColor: '#2A3439',
-//                 color: 'white',
-//                 padding: '10px 20px',
-//                 height: '29px',
-//                 borderRadius: '10px',
-//             }} />
-//         </div>
-//     </label>
-//     <div onClick={handleSend} style={{
-//         backgroundColor: '#2A3439',
-//         color: 'white',
-//         padding: '10px 20px',
-//         marginLeft: '10px',
-//         borderRadius: '10px',
-//         alignSelf: 'center',
-//         width: '24px',
-//         height: '29px',
-//         cursor: 'pointer',
-//         display: 'ruby'
-//     }}><SendIcon /></div>
-
-//     {!replyMess && <div onClick={() => navigate('/conference')} style={{
-//         marginLeft: '10px',
-//         backgroundColor: '#2A3439',
-//         color: 'white',
-//         padding: '10px 20px',
-//         borderRadius: '10px',
-//         width: '24px',
-//         height: '29px',
-//         alignSelf: 'center',
-//         cursor: 'pointer',
-//         display: 'ruby'
-//     }}><VideoCameraFrontIcon /></div>}
-//     <div onClick={handleOpenSTT} style={{
-//         marginLeft: '10px',
-//         backgroundColor: '#2A3439',
-//         color: 'white',
-//         padding: '10px 20px',
-//         borderRadius: '10px',
-//         alignSelf: 'center',
-//         width: '24px',
-//         height: '29px',
-//         cursor: 'pointer',
-//         display: 'ruby'
-//     }}><MicIcon /></div>
-// </div>
+const closeButtonStyle = {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    border: 'none',
+    color: '#000',
+    fontSize: '16px',
+    lineHeight: 1,
+    cursor: 'pointer',
+    padding: '5px 8px',
+    borderRadius: '50%',
+    transition: 'background-color 0.3s ease'
+};

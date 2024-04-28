@@ -271,10 +271,6 @@ const ConferenceRoom = () => {
         height: '100vh',
         overflow: 'hidden',
         backgroundColor: '#f5f5f5',
-
-        // border: 'solid 1px red'
-        // backgroundColor: 'rgb(193 203 210)'
-        // gridTemplateColumns: '2fr 12fr',
       }}
     >
       {isRecord && (
@@ -301,12 +297,6 @@ const ConferenceRoom = () => {
   `}</style>
         </div>
       )}
-
-
-      {/* <div style={{}}>
-        <strong>Danh sách</strong>
-        {onlineUsers && onlineUsers.map((user) => <div key={user.peerId}>{user.name}</div>)}
-      </div> */}
       <div style={{}}>
         <div
           style={{
@@ -341,7 +331,8 @@ const ConferenceRoom = () => {
               }
             });
             return (
-              <React.Fragment key={user.peerId}>
+              <React.Fragment key={user.peerId} >
+                {user.name}
                 <video
                   id={user.peerId}
                   height={videoHeight}

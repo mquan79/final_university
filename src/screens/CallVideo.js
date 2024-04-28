@@ -151,7 +151,7 @@ const CallVideo = () => {
     if (User) {
       var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
       getUserMedia({ video: true, audio: true }, function (stream) {
-        var call = peer.current.call(User.peerId, stream);
+        const call = peer.current.call(User.peerId, stream);
         call.on('stream', function (remoteStream) {
           playStream('remoteStream', remoteStream);
         });

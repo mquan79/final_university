@@ -155,7 +155,7 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
             <Grid item xs={12} style={styles.container}>
               <TextField
                 style={styles.input}
-                label="Tên channel"
+                label="Tìm kiếm..."
                 InputLabelProps={{
                   style: { color: '#fbb700', fontWeight: 'bolder' },
                 }}

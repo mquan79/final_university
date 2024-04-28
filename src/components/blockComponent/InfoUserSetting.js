@@ -109,7 +109,7 @@ const InfoUserSetting = ({ id }) => {
                     sx={{ width: 200, height: 200, margin: 'auto', cursor: 'pointer', marginBottom: '20px' }}
                     onClick={handleClick}
                 />
-                <input type="file" id="avatar-input" style={{ display: "none" }} onChange={handleAvatarChange} />
+                <input type="file" id="avatar-input" style={{ display: "none" }} onChange={handleAvatarChange}  accept="image/*"/>
                 <div style={{ textAlign: 'center' }}>
                     <Typography variant="body1" gutterBottom>
                         ID: {user._id}

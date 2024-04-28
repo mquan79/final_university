@@ -4,11 +4,48 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useCookies } from 'react-cookie';
 import { useSelector } from 'react-redux';
 import InfoUser from './InfoUser';
-
+import { useDataFetching } from '../logicComponent/fetchData'
+import { add, updated, deleted} from '../../services/apiCustomer'
 const DialogQRCode = ({ open, handleClose, id }) => {
   const [cookies] = useCookies(['user']);
   const friends = useSelector((state) => state.data.friend);
   const [stateFriend, setStateFriend] = useState(null);
+  const { fetchFriend } = useDataFetching();
+  const handleAddFriend = async() => {
+    const data = {
+      idUser1: cookies.user._id,
+      idUser2: id,
+      status: 'wait'
+    }
+
+    await add(data, 'friends');
+    fetchFriend();
+  }
+
+  const handleAcceptFriend = async() => {
+    const stateWait = friends.find(e => e.idUser1 === id && e.idUser2 === cookies.user?._id && e.status === 'wait');
+    const dataUpdate = {
+      status: 'friend'
+    }
+
+    await updated(stateWait._id, dataUpdate, 'friends')
+    fetchFriend()
+  }
+
+  const handleUnAcceptFriend = async() => {
+    const stateWait = friends.find(e => e.idUser1 === id && e.idUser2 === cookies.user?._id && e.status === 'wait');
+    await deleted(stateWait._id, 'friends')
+    fetchFriend();
+  }
+
+
+  const handleDeleteAddFriend = async() => {
+    const stateNotWait = friends.find(e => e.idUser2 === id && e.idUser1 === cookies.user?._id && e.status === 'wait');
+    await deleted(stateNotWait._id, 'friends')
+    fetchFriend();
+  }
+
+
 
   useEffect(() => {
     if (friends && cookies && id) {
@@ -37,16 +74,16 @@ const DialogQRCode = ({ open, handleClose, id }) => {
       case 'wait':
         return (
           <>
-            <Button onClick={handleFriendAction}>Chấp nhận</Button>
-            <Button onClick={handleFriendAction}>Hủy lời mời</Button>
+            <Button onClick={handleAcceptFriend}>Chấp nhận</Button>
+            <Button onClick={handleUnAcceptFriend}>Hủy lời mời</Button>
           </>
         );
       case 'friend':
         return <Button disabled>Đã kết bạn</Button>;
       case 'waiting':
-        return <Button onClick={handleFriendAction}>Hủy lời mời</Button>;
+        return <Button onClick={handleDeleteAddFriend}>Hủy lời mời</Button>;
       case 'no':
-        return <Button onClick={handleFriendAction}>Gửi lời mời</Button>;
+        return <Button onClick={handleAddFriend}>Gửi lời mời</Button>;
       default:
         return null;
     }
