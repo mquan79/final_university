@@ -10,6 +10,7 @@ import {
     setUploadImage,
     setFriend
 } from './store/Slice/dataSlice'
+import socket from './components/logicComponent/socketId'
 
 const FetchData = () => {
     const dispatch = useDispatch();
@@ -75,6 +76,10 @@ const FetchData = () => {
          console.error(e)   
         }
     }
+
+    useEffect(() => {
+        socket.on('fetch friend', () => fetchFriend())
+    }, [])
 
     useEffect(() => {
         fetchUser()

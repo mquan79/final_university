@@ -16,14 +16,19 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
   const users = useSelector((state) => state.data.user)
   const [open, setOpen] = useState(false);
   const [idGroup, setIdGroup] = useState(null)
-  
+
   const handleSearch = () => {
-    const groupFind = groups.filter((item) => item.nameGroup === urlNameGroup)
-    if (groupFind) {
-      setGroupFind(groupFind)
-    } else {
+    if(urlNameGroup === '') {
       enqueueSnackbar('Không tìm thấy channel', { variant: 'error', autoHideDuration: 1000 });
+      return;
     }
+    const groupFindA = groups.filter((item) => item.nameGroup === urlNameGroup)
+    if(groupFindA.length === 0) {
+      enqueueSnackbar('Không tìm thấy channel', { variant: 'error', autoHideDuration: 1000 });
+      setUrlNameGroup('')
+      return;
+    }
+    setGroupFind(groupFindA)
 
     setUrlNameGroup('')
   }
@@ -86,12 +91,6 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
     const user = users.find((user) => user._id === group.hostGroup)
     return (
       <Card sx={{ maxWidth: '100%', marginBottom: '15px' }}>
-        <CardMedia
-          component="img"
-          alt="green iguana"
-          height="140"
-          image={`${SERVER_URL}/uploads/${group.background ? group.background : 'backgroud1.jpg'}`}
-        />
         <CardContent>
           <Typography gutterBottom variant="h5" component="div">
             {group.nameGroup && group.nameGroup}
@@ -115,15 +114,24 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
             style={styles.input}
             label="Tên channel"
             InputLabelProps={{
-              style: { color: 'white' },
+              style: { color: '#fbb700', fontWeight: 'bolder' },
             }}
             InputProps={{
-              style: { color: 'white' },
+              style: { color: '#fbb700', fontWeight: 'bolder' },
             }}
             value={urlNameGroup}
             onChange={(e) => setUrlNameGroup(e.target.value)}
           />
-          <Button style={styles.button} onClick={handleSearch}>Search</Button>
+          <Button style={styles.button} onClick={handleSearch}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#fbb700'
+              e.target.style.color = 'black'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#0950CD'
+              e.target.style.color = 'white'
+
+            }}>Search</Button>
           <Box sx={{
             maxHeight: '100vh',
             overflow: "auto",
@@ -133,11 +141,12 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
             },
             '-ms-overflow-style': 'none',
           }}>
-            {groupFind.map((group) => {
+            {groupFind ? groupFind.map((group) => {
               const member = groupMembers.some((member) => member.idGroup === group._id && member.idMember === cookies.user._id);
               console.log(cookies.user, group, groupMembers)
               return !member && <Group key={group._id} group={group} />;
-            })}
+            }) :
+            <div style={{ color: 'black'}}>Không tìm thấy threads nào cả...</div>}
           </Box>
         </>
       ) : (
@@ -148,10 +157,10 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
                 style={styles.input}
                 label="Tên channel"
                 InputLabelProps={{
-                  style: { color: 'white' },
+                  style: { color: '#fbb700', fontWeight: 'bolder' },
                 }}
                 InputProps={{
-                  style: { color: 'white' },
+                  style: { color: '#fbb700', fontWeight: 'bolder' },
                 }}
                 value={urlNameGroup}
                 onChange={(e) => setUrlNameGroup(e.target.value)}
@@ -160,12 +169,12 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
                 style={styles.button}
                 onClick={handleSearch}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#0F52BA'
-                  e.target.style.color = 'white'
+                  e.target.style.backgroundColor = '#fbb700'
+                  e.target.style.color = 'black'
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'white'
-                  e.target.style.color = '#353839'
+                  e.target.style.backgroundColor = '#0950CD'
+                  e.target.style.color = 'white'
 
                 }}
               >Search</Button>
@@ -180,10 +189,6 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
 
 const styles = {
   container: {
-    backgroundImage: `url(${SERVER_URL}/uploads/backgroud.jpg)`,
-    backgroundSize: 'cover',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center',
     height: '40vh',
     maxWidth: '100%',
     overflow: 'hidden',
@@ -194,7 +199,7 @@ const styles = {
   input: {
     margin: '5px',
     width: '320px',
-    backgroundColor: '#353839',
+    backgroundColor: '#0950CD',
     color: 'white',
     borderRadius: '4px',
   },
@@ -236,12 +241,6 @@ const styles = {
   },
 
   header: {
-    backgroundImage: `url(${SERVER_URL}/uploads/backgroud.jpg)`,
-    backgroundSize: 'cover',
-    backgroundRepeat: 'none',
-    WebkitBackgroundClip: 'text',
-    backgroundClip: 'text',
-    color: 'transparent',
     fontWeight: 'bolder'
   }
 

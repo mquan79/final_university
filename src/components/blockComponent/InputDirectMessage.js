@@ -127,6 +127,7 @@ const InputDirectMessage = ({ fetchData, replyMess, clearReplyMess }) => {
     useEffect(() => {
         socket.on('No Call', handleCalling);
         socket.on('Online Call', handleUserOnlingCalling);
+        socket.on('No Online', handleAlertUserNoOnline)
         return () => {
             socket.off('No Call', handleCalling);
             socket.off('Online Call', handleUserOnlingCalling);
@@ -134,27 +135,29 @@ const InputDirectMessage = ({ fetchData, replyMess, clearReplyMess }) => {
     }, []);
 
     const handleCalling = (data) => {
-        console.log(data)
-        if(data.idRoom === `${cookies.user._id}-${idChatRoom}`){
+        const dataCut = data.idRoom.split('-')
+        if(data.user === idChatRoom && dataCut[0] === cookies.user._id && dataCut[1] === idChatRoom){
             dispatch(onCall())
             dispatch(setRoomCall(`${cookies.user._id}-${idChatRoom}`))
         }
-
     }
 
     const handleUserOnlingCalling = (data) => {
-        if(data.idRoom === `${cookies.user._id}-${idChatRoom}`){
-            console.log(data)
+        if(data.user === idChatRoom){
             enqueueSnackbar('Gọi thất bại vì người dùng đang ở trong cuộc gọi khác!!!', { variant: 'error', autoHideDuration: 1000 });
         }
     }
 
+    const handleAlertUserNoOnline = (data) => {
+        enqueueSnackbar('Người dùng này hiện không online!!!', { variant: 'error', autoHideDuration: 1000 });
+    }
+
     const handleCall = () => {
-        socket.emit('Call Video', {user: idChatRoom, idRoom: `${cookies.user._id}-${idChatRoom}`})
+        socket.emit('Call Video', {userCall: cookies.user._id, user: idChatRoom, idRoom: `${cookies.user._id}-${idChatRoom}`})
     }
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', width: '100%', paddingBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', paddingTop: '20px', paddingBottom: '20px', paddingLeft: '20px'}}>
             <Speech />
             <TextField
                 type="text"
@@ -168,7 +171,7 @@ const InputDirectMessage = ({ fetchData, replyMess, clearReplyMess }) => {
                 }}
 
                 InputProps={{
-                    style: { color: 'white' },
+                    style: { color: '#0950CD' },
                     startAdornment: file && (
                         <InputAdornment position="start">
                             {(['jpg', 'png'].includes(typeOfFile)) ? (
@@ -191,19 +194,19 @@ const InputDirectMessage = ({ fetchData, replyMess, clearReplyMess }) => {
             />
             <label htmlFor="icon-button-file">
                 <IconButton component="span">
-                    <PhotoCamera style={{ color: 'white' }} />
+                    <PhotoCamera style={{ color: '#0950CD' }} />
                 </IconButton>
             </label>
             <IconButton onClick={handleSend}>
-                <SendIcon style={{ color: 'white' }} />
+                <SendIcon style={{ color: '#0950CD' }} />
             </IconButton>
-            {!replyMess && (
+            {/* {!replyMess && (
                 <IconButton onClick={handleCall}>
-                    <VideoCameraFrontIcon style={{ color: 'white' }} />
+                    <VideoCameraFrontIcon style={{ color: '#0950CD' }} />
                 </IconButton>
-            )}
+            )} */}
             <IconButton onClick={handleOpenSTT}>
-                <MicIcon style={{ color: 'white' }} />
+                <MicIcon style={{ color: '#0950CD' }} />
             </IconButton>
             {replyMess && <div onClick={clearReplyMess}><CloseIcon /></div>}
         </div>

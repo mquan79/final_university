@@ -65,7 +65,8 @@ const CallVideo = () => {
 
     socket.current.on('Off call', (data) => {
       if(data.idRoom === idRoom) {
-        navigate('/')
+        navigate('/');
+        dispatch(outCall())
         window.location.reload();
       }
     });
@@ -164,7 +165,7 @@ const CallVideo = () => {
     <div style={{
       height: '100vh',
       overflow: 'hidden',
-      backgroundColor: '#2a3439'
+      backgroundColor: '#f5f5f5'
     }}>
       <div style={{
         textAlign: '-webkit-center'

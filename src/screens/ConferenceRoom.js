@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import * as ENV from '../env';
 import { Grid } from '@mui/material';
 import ButtonConferenceRoom from '../components/blockComponent/ButtonConferenceRoom';
-import { inConference, outConference } from '../store/Slice/roomSlice';
+import { inConference, outConference, setViewSharing, onViewSharing, offViewSharing } from '../store/Slice/roomSlice';
 import { useNavigate } from 'react-router-dom';
 import VideoLocalStreamConference from '../components/blockComponent/VideoLocalStreamConference';
 import socketId from '../components/logicComponent/socketId';
@@ -25,7 +25,11 @@ const ConferenceRoom = () => {
   const socket = useRef(null);
   const peer = useRef(null);
   const dispatch = useDispatch();
+  const sharing = useSelector((state) => state.room.sharing)
+  const viewShare = useSelector((state) => state.room.viewShare)
+  const viewSharing = useSelector((state) => state.room.viewSharing)
   const [isSharing, setIsSharing] = useState(false);
+  const [listSharing, setListSharing] = useState([])
   const [userSharing, setUserSharing] = useState(null);
   const [videoHeight, setVideoHeight] = useState('90%');
   const [videoWidth, setVideoWidth] = useState('57%');
@@ -77,19 +81,49 @@ const ConferenceRoom = () => {
     }
   }, [])
 
-  const handleSharingScreen = async(data) => {
-    console.log('ON')
-    if (data.idTopic === idTopic) {
-      await setUserSharing(data.user)
-      await setIsSharing(true);
+  const handleSharingScreen = (data) => {
+    const video = document.getElementById(data.peerId)
+    const block = document.getElementById(`${data.peerId}_block`)
+    if (video && block) {
+      video.style.display = 'none'
+      block.style.display = 'block'
+      const image = block.querySelector('img');
+      const button = block.querySelector('button');
+
+      if (image) {
+        image.style.filter = 'brightness(50%)';
+      }
+      if (button) {
+        button.style.display = 'block';
+      }
     }
+    // console.log('ON')
+    // if (data.idTopic === idTopic) {
+    //   await setUserSharing(data.user)
+    //   await setIsSharing(true);
+    // }
   }
 
-  const handleOffSharing = async(data) => {
-    if (data.idTopic === idTopic) {
-      setIsSharing(false);
-      setUserSharing(null)
+  const handleOffSharing = (data) => {
+    const video = document.getElementById(data.peerId)
+    const block = document.getElementById(`${data.peerId}_block`)
+    if (video && block) {
+      video.style.display = 'none'
+      block.style.display = 'block'
+      const image = block.querySelector('img');
+      const button = block.querySelector('button');
+
+      if (image) {
+        image.style.filter = 'brightness(100%)';
+      }
+
+      if (button) {
+        button.style.display = 'none';
+      }
     }
+    const arrShared = listSharing.filter(e => e.id !== data.id)
+    setListSharing(arrShared)
+    dispatch(offViewSharing())
   }
 
 
@@ -120,7 +154,9 @@ const ConferenceRoom = () => {
 
     initializePeer();
 
-    socket.current.on('List online', (arrUser) => {
+    socket.current.on('List online', (arrUser, arrSharing) => {
+      const arrShare = arrSharing.filter((e) => e.idTopic === idTopic)
+      setListSharing(arrShare)
       if (Array.isArray(arrUser)) {
         const arrFilter = arrUser.filter((user) => user.idTopic === idTopic && user.peerId !== peerId);
         setOnlineUsers(arrFilter);
@@ -221,14 +257,20 @@ const ConferenceRoom = () => {
       }
     }
   }
-  console.log(isSharing)
+
+  const handleViewStream = (id) => {
+    dispatch(onViewSharing())
+    dispatch(setViewSharing(id))
+  }
+
+  console.log(viewSharing)
 
   return (
     <div
       style={{
         height: '100vh',
         overflow: 'hidden',
-        backgroundColor: '#2a3439',
+        backgroundColor: '#f5f5f5',
 
         // border: 'solid 1px red'
         // backgroundColor: 'rgb(193 203 210)'
@@ -266,21 +308,17 @@ const ConferenceRoom = () => {
         {onlineUsers && onlineUsers.map((user) => <div key={user.peerId}>{user.name}</div>)}
       </div> */}
       <div style={{}}>
-        {isSharing &&
-          <div
-            id="remote"
-            style={{
-              height: '60vh',
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'space-around',
-              alignItems: 'center',
-            }}
-          >
-            <SharingScreen userSharing={userSharing}/>
-          </div>
-        }
-
+        <div
+          style={{
+            height: '60vh',
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'space-around',
+            alignItems: 'center',
+            display: (sharing || viewShare) ? 'flex' : 'none'
+          }}>
+          {(sharing || viewShare) && <SharingScreen />}
+        </div>
         <div
           id="remote"
           style={{
@@ -289,10 +327,12 @@ const ConferenceRoom = () => {
             flexWrap: 'wrap',
             justifyContent: 'space-around',
             alignItems: 'center',
-            display: isSharing ? 'none' : 'flex',
+            display: (sharing || viewShare) ? 'none' : 'flex'
           }}
         >
           {onlineUsers.map((user) => {
+            const userShare = listSharing.find((e) => e.id === user.id)
+            console.log(userShare)
             const call = peer.current.call(user.peerId, localStream);
             call.on('stream', (remoteStream) => {
               const videoElement = document.getElementById(user.peerId);
@@ -308,7 +348,7 @@ const ConferenceRoom = () => {
                   width={videoWidth}
                   autoPlay={true}
                   muted={!user.audio ? true : false}
-                  style={{ borderRadius: '10px', objectFit: 'cover', transform: 'scaleX(-1)', display: user.video ? 'block' : 'none' }}
+                  style={{ borderRadius: '10px', objectFit: 'cover', transform: 'scaleX(-1)', display: user.video && typeof userShare === 'undefined' ? 'block' : 'none' }}
                 />
                 <div
                   id={`${user.peerId}_block`}
@@ -317,10 +357,11 @@ const ConferenceRoom = () => {
                     height: `${videoHeight}`,
                     width: `${videoWidth}`,
                     borderRadius: '10px',
-                    display: !user.video ? 'block' : 'none',
-                    backgroundColor: 'rgb(54, 69, 79)',
+                    display: (!user.video || typeof userShare !== 'undefined') ? 'block' : 'none',
+                    backgroundColor: '#f5f5f5',
                     alignContent: 'center',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    position: 'relative'
                   }}
                 >
                   <img
@@ -329,17 +370,38 @@ const ConferenceRoom = () => {
                     style={{
                       width: '100px',
                       height: '100px',
-                      borderRadius: '50%'
-
+                      borderRadius: '50%',
+                      filter: typeof userShare !== 'undefined' ? 'brightness(50%)' : 'brightness(100%)'
                     }}
                   />
+                  <button style={{
+                    display: typeof userShare !== 'undefined' ? 'block' : 'none',
+                    cursor: 'pointer',
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.5)', // Màu nền cho nút button
+                    border: 'none',
+                    borderRadius: '5px', // Bo tròn góc cho nút button
+                    padding: '10px 20px', // Kích thước nút button
+                    boxShadow: '0 0 10px rgba(0, 0, 0, 0.3)', // Đổ bóng cho nút button
+                    zIndex: '1', // Đặt nút button lên trên hình ảnh
+                    transition: 'background-color 0.3s ease', // Hiệu ứng chuyển đổi màu nền
+                  }}
+                    onClick={() => handleViewStream(user.id)}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.8)'} // Màu nền khi hover
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.5)'} // Màu nền khi không hover
+                  >
+                    Xem stream
+                  </button>
                 </div>
               </React.Fragment>
             );
           })}
         </div>
         <div style={{ display: 'contents', height: '40vh' }}>
-          <VideoLocalStreamConference socket={socket.current} off={handleOff} size={onlineUsers.length} peerId={peerId} setIsRecord={setIsRecord} isSharing={isSharing} setIsSharing={setIsSharing} setUserSharing={setUserSharing} userSharing={userSharing}/>
+          <VideoLocalStreamConference socket={socket.current} off={handleOff} size={onlineUsers.length} peerId={peerId} setIsRecord={setIsRecord} isSharing={isSharing} setIsSharing={setIsSharing} setUserSharing={setUserSharing} userSharing={userSharing} />
         </div>
       </div>
     </div >

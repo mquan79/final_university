@@ -43,11 +43,17 @@ const VideoLocalStream = ({ socket, off }) => {
 
 
     const handleVideo = () => {
+        if(socket === null) {
+            return;
+        }
         socket.emit('Change video', { idRoom: idRoom, change: !video })
         setVideo(!video)
     }
 
     const handleAudio = () => {
+        if(socket === null) {
+            return;
+        }
         socket.emit('Change audio', { idRoom: idRoom, change: audio })
         setAudio(!audio)
     }

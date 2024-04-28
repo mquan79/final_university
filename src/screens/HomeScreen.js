@@ -20,6 +20,7 @@ import { useDataFetching } from '../components/logicComponent/fetchData';
 import { offConference, offCall } from '../store/Slice/roomSlice';
 import socket from '../components/logicComponent/socketId';
 import { useNavigate } from 'react-router-dom';
+import ListUserGroup from '../components/blockComponent/ListUserGroup'
 const SERVER_URL = `http://${ENV.env.ipv4}:5000`
 const HomeScreen = () => {
   const [cookies, removeCookie] = useCookies(['user']);
@@ -33,8 +34,10 @@ const HomeScreen = () => {
   const idGroup = useSelector((state) => state.group.group);
   const idTopic = useSelector((state) => state.group.topic);
   const [topicFilter, setTopicFilter] = useState([]);
+  const [stateA, setStateA] = useState('channel')
   const navigate = useNavigate()
-
+  const inCall = useSelector((state) => state.room.inCall);
+  console.log(inCall)
   if (groupMember) {
     var groupMemberFilter = groupMember.filter((item) => item.idMember === cookies.user._id);
   }
@@ -50,18 +53,34 @@ const HomeScreen = () => {
   const { width } = windowDimensions;
   const { fetchGroup, fetchTopic, fetchMember } = useDataFetching();
 
-  const logout = (data) => {
-    console.log('Đăng xuất ', data)
-    enqueueSnackbar('Tài khoản đang đăng nhập ở nơi khác', { variant: 'error', autoHideDuration: 1000 });
+  const logout = async (data) => {
+    if (data._id === cookies.user._id) {
+      await enqueueSnackbar('Tài khoản đang đăng nhập ở nơi khác', { variant: 'error', autoHideDuration: 1000 });
+      removeCookie('user', null);
+      navigate('/login')
+      window.location.reload();
+    }
+
+  };
+
+  const Logout = () => {
+    socket.emit('Logout', cookies.user)
     removeCookie('user', null);
     navigate('/login')
     window.location.reload();
-  };
+  }
+  const goToSetting = () => {
+    navigate('setting')
+  }
 
   useEffect(() => {
     socket.on('Login logout', logout);
+    socket.on('Go to setting', goToSetting);
+    socket.on('Logout header', Logout);
     return () => {
       socket.off('Login logout', logout);
+      socket.off('Go to setting', goToSetting);
+      socket.off('Logout header', Logout);
     };
   })
 
@@ -186,11 +205,7 @@ const HomeScreen = () => {
 
   return (
     <div style={{
-      // backgroundImage: `url(${SERVER_URL}/uploads/backgroud.jpg)`,
-      // backgroundSize: 'cover',
-      // backgroundRepeat: 'no-repeat',
-      // backgroundPosition: 'center',
-      backgroundColor: 'rgb(28 30 31)',
+      backgroundColor: '#154ba9',
       height: '100vh',
       maxWidth: '100%',
       overflow: 'hidden',
@@ -212,21 +227,23 @@ const HomeScreen = () => {
       }}>
         <div>
           <ItemGroup onClick={() => handleDirectMessage()} style={{
-            backgroundImage: `url(${SERVER_URL}/uploads/backgroud2.jpg)`,
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
+            // backgroundImage: `url(${SERVER_URL}/uploads/backgroud2.jpg)`,
+            // backgroundSize: 'cover',
+            // backgroundRepeat: 'no-repeat',
+            // backgroundPosition: 'center',
             borderRadius: (isDirect ? '20px' : '90px'),
             transition: 'border-radius 0.1s ease',
             // transform: (isDirect ? 'rotate(360deg)' : 'rotate(0deg)'),
             justifyContent: 'center',
             display: 'flex',
             alignItems: 'center',
-            color: 'white',
+            color: '#2A3439',
+            backgroundColor: '#fbb700',
             cursor: 'pointer',
             height: `${width * 0.05}px`,
             width: `${width * 0.05}px`,
             fontSize: `${width * 0.01}px`,
+            zIndex: 1
           }}
             elevation={24}>
 
@@ -245,14 +262,12 @@ const HomeScreen = () => {
               width: `${width * 0.05}px`,
               fontSize: `${width * 0.01}px`,
               transition: 'border-radius 0.3s ease', // Thêm transition để tạo hiệu ứng mượt mà
-              backgroundColor: '#2A3439' // Màu nền ban đầu của ItemGroup
+              backgroundColor: '#0950CD' // Màu nền ban đầu của ItemGroup
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#0F52BA'; // Hover effect - thay đổi màu nền
               e.target.style.borderRadius = '20px' // Thay đổi màu chữ khi hover
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#2A3439'; // Loại bỏ hover effect - trở lại màu nền ban đầu
               e.target.style.borderRadius = '90px'// Trở lại màu chữ ban đầu
             }}
             elevation={24}>
@@ -272,14 +287,12 @@ const HomeScreen = () => {
               width: `${width * 0.05}px`,
               fontSize: `${width * 0.01}px`,
               transition: 'border-radius 0.3s ease', // Thêm transition để tạo hiệu ứng mượt mà
-              backgroundColor: (isOpenJoinGroup ? '#0F52BA' : '#2A3439') // Màu nền ban đầu của ItemGroup
+              backgroundColor: '#0950CD' // Màu nền ban đầu của ItemGroup
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#0F52BA'; // Hover effect - thay đổi màu nền
               e.target.style.borderRadius = '20px' // Thay đổi màu chữ khi hover
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = (isOpenJoinGroup ? '#0F52BA' : '#2A3439'); // Loại bỏ hover effect - trở lại màu nền ban đầu
               e.target.style.borderRadius = (isOpenJoinGroup ? '20px' : '90px')// Trở lại màu chữ ban đầu
             }}
             // Loại bỏ hover effect
@@ -295,8 +308,10 @@ const HomeScreen = () => {
                 key={group._id}
                 onClick={() => choiseChannel(group.idGroup)}
                 style={{
-                  backgroundColor: (idGroup === group.idGroup) ? '#0F52BA' : '#2A3439',
+                  backgroundColor: '#0950CD',
                   borderRadius: (idGroup === group.idGroup) ? '20px' : '90px',
+                  padding: '3px',
+                  border: (idGroup === group.idGroup) ? 'solid 3px #f5f5f5' : 'solid 0px white',
                   transition: 'border-radius 0.1s ease',
                   justifyContent: 'center',
                   display: 'flex',
@@ -348,14 +363,11 @@ const HomeScreen = () => {
                 height: "100vh",
                 display: "flex",
                 flexDirection: "column",
-                backgroundColor: '#2A3439',
-                marginTop: '2vh',
+                backgroundColor: '#f5f5f5',
                 color: 'white',
                 paddingTop: '10px',
                 paddingLeft: '15px',
                 paddingRight: '15px',
-                borderTopLeftRadius: '15px',
-                borderTopRightRadius: '15px',
                 marginRight: '10px'
               }}
             >
@@ -373,14 +385,11 @@ const HomeScreen = () => {
                 height: "100vh",
                 display: "flex",
                 flexDirection: "column",
-                backgroundColor: '#2A3439',
-                marginTop: '2vh',
+                backgroundColor: '#f5f5f5',
                 color: 'white',
                 paddingTop: '10px',
                 paddingLeft: '15px',
                 paddingRight: '15px',
-                borderTopLeftRadius: '15px',
-                borderTopRightRadius: '15px'
               }}
             >
               <WaitingCall />
@@ -397,14 +406,11 @@ const HomeScreen = () => {
                 height: "100vh",
                 display: "flex",
                 flexDirection: "column",
-                backgroundColor: '#2A3439',
-                marginTop: '2vh',
+                backgroundColor: '#f5f5f5',
                 color: 'white',
                 paddingTop: '10px',
                 paddingLeft: '15px',
                 paddingRight: '15px',
-                borderTopLeftRadius: '15px',
-                borderTopRightRadius: '15px'
               }}
             >
               <WaitingConference />
@@ -413,93 +419,96 @@ const HomeScreen = () => {
         ) : idGroup ? (
           <div style={{
             height: '100vh',
-            marginTop: '2vh',
             display: 'grid',
             gridTemplateColumns: '2fr 12fr'
           }}>
             <div style={{
               height: '100vh',
               width: `${width * 0.15}px`,
-              padding: '15px',
-              backgroundColor: '#2A3439',
-              borderTopLeftRadius: '15px',
+              backgroundColor: '#0950CD',
             }}>
               {idGroup && (
-                <>
-                  <div
-                    style={{
-                      cursor: 'pointer',
-                      display: 'flex',
-                      justifyContent: 'end',
-                      fontSize: '30px',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.color = '#0F52BA';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.color = 'white';
-                    }}
-                    onClick={handleCreateTopic}
-                  >
-                    +
-                  </div>
-                  <div style={{
-                    height: '80vh',
-                    flexGrow: 1,
-                    overflow: "auto",
-                    scrollbarWidth: 'none',
-                    '&::-webkit-scrollbar': {
-                      display: 'none',
-                    },
-                    '&-ms-overflow-style:': {
-                      display: 'none',
-                    },
-                  }}>
-                    {topicFilter.map((topic) => (
-                      <Paper
-                        key={topic._id}
-                        elevation={6}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          height: `${width * 0.03}px`,
-                          width: `${width * 0.15}px`,
-                          fontSize: `${width * 0.01}px`,
-                          marginTop: '20px',
-                          cursor: 'pointer',
-                          color: 'white',
-                          backgroundColor: idTopic === topic._id ? '#0F52BA' : '#36454F',
-                          fontWeight: 'bolder',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = '#0F52BA';
-                          e.target.style.color = '#36454F';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = idTopic === topic._id ? '#0F52BA' : '#36454F';
-                          e.target.style.color = 'white';
-                        }}
-                        onClick={() => setIdTopic(topic._id)}
-                      >
-                        {topic.nameTopicGroup}
-                      </Paper>
-                    ))}
-                  </div>
-                  <div style={{
-                    display: 'fixed'
-                  }}>
-                    <InfoUser />
-                  </div>
-                </>
+                (stateA === 'channel') ? (
+                  <>
+                    <div
+                      style={{
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'end',
+                        fontSize: '30px',
+                        marginTop: '40px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.color = 'grey';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.color = 'white';
+                      }}
+                      onClick={handleCreateTopic}
+                    >
+                      +
+                    </div>
+                    <div style={{
+                      height: '80vh',
+                      flexGrow: 1,
+                      overflow: "auto",
+                      scrollbarWidth: 'none',
+                      '&::-webkit-scrollbar': {
+                        display: 'none',
+                      },
+                      '&-ms-overflow-style:': {
+                        display: 'none',
+                      },
+                    }}>
+                      {topicFilter.map((topic) => (
+                        <Paper
+                          key={topic._id}
+                          elevation={6}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            height: `${width * 0.03}px`,
+                            width: `${width * 0.15}px`,
+                            fontSize: `${width * 0.01}px`,
+                            cursor: 'pointer',
+                            color: idTopic === topic._id ? 'black' : 'white',
+                            backgroundColor: idTopic === topic._id ? '#fbb700' : '#0950CD',
+                            fontWeight: 'bolder',
+                            borderRadius: '0px',
+                            paddingLeft: '20px'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#fbb700';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = idTopic === topic._id ? '#fbb700' : '#0950CD';
+                          }}
+                          onClick={() => setIdTopic(topic._id)}
+                        >
+                          #  {topic.nameTopicGroup}
+                        </Paper>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <ListUserGroup />
+                )
               )
               }
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-evenly'
+              }}>
+                {/* <InfoUser /> */}
+                <Button variant="contained" onClick={() => setStateA('threads')} style={{ color: 'black', fontSize: '10px', width: '50%', borderRadius: '0px', backgroundColor: (stateA === 'threads') ? '#fbb700' : '#f5f5f5' }}>Users</Button>
+                <Button variant="contained" onClick={() => setStateA('channel')} style={{ color: 'black', fontSize: '10px', width: '50%', borderRadius: '0px', backgroundColor: (stateA === 'channel') ? '#fbb700' : '#f5f5f5' }}>Channel</Button>
+              </div>
             </div>
             <div style={{
               height: '100vh',
               paddingRight: '10px',
-              borderTopRightRadius: '15px',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              boxShadow: 'rgba(0, 0, 0, 0) 0px 0px 0px'
             }}>
               {idTopic && <ChatScreen />}
             </div>
@@ -517,64 +526,4 @@ const HomeScreen = () => {
   )
 };
 
-const styles = {
-  container: {
-    backgroundImage: `url(${SERVER_URL}/uploads/backgroud.jpg)`,
-    backgroundSize: 'cover',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center',
-    height: '100vh',
-    maxWidth: '100%',
-    overflow: 'hidden'
-  },
-  input: {
-    margin: '5px',
-    width: '320px'
-  },
-  icon: {
-    fontSize: '100px',
-    backgroundColor: 'white',
-    position: 'absolute',
-    top: '-50px',
-    right: '175px',
-    color: '#084387',
-    borderRadius: '60px'
-  },
-  formContainer: {
-    position: 'relative',
-    backgroundColor: 'white',
-    padding: '50px',
-    borderRadius: '20px',
-    width: '350px',
-    boxShadow: '0 0 10px 10px #0B6AB0',
-    textAlign: 'center'
-  },
-  button: {
-    backgroundImage: `url(${SERVER_URL}/uploads/button.png)`,
-    backgroundSize: 'cover',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center',
-    fontWeight: 'bold'
-  },
-  registerLink: {
-    fontSize: '13px',
-    marginTop: '10px'
-  },
-
-  registerButton: {
-    cursor: 'pointer',
-    fontSize: '13px'
-  },
-
-  header: {
-    backgroundImage: `url(${SERVER_URL}/uploads/backgroud.jpg)`,
-    backgroundSize: 'cover',
-    backgroundRepeat: 'none',
-    WebkitBackgroundClip: 'text',
-    backgroundClip: 'text',
-    color: 'transparent',
-    fontWeight: 'bolder'
-  }
-
-};
 export default HomeScreen;

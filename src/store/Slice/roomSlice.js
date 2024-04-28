@@ -12,7 +12,10 @@ const roomSlice = createSlice({
       audio: false,
       video: true
     },
-    roomCall: null
+    roomCall: null,
+    sharing: false,
+    viewShare: false,
+    viewSharing: null
   },
   reducers: {
     setRoom: (state, action) => {
@@ -61,9 +64,29 @@ const roomSlice = createSlice({
 
     setRoomCall: (state, action) => {
       state.roomCall = action.payload
+    },
+
+    onSharing: (state) => {
+      state.sharing = true
+    },
+    
+    offSharing: (state) => {
+      state.sharing = false
+    },
+
+    onViewSharing: (state) => {
+      state.viewShare = true
+    },
+    
+    offViewSharing: (state) => {
+      state.viewShare = false
+    },
+
+    setViewSharing: (state, action) => {
+      state.viewSharing = action.payload
     }
   },
 });
 
-export const { setRoom, removeRoom, onConference, offConference, inConference, outConference, onCall, offCall, inCall, outCall, setDevice, setRoomCall } = roomSlice.actions;
+export const { setRoom, removeRoom, onConference, offConference, inConference, outConference, onCall, offCall, inCall, outCall, setDevice, setRoomCall, onSharing, offSharing, setViewSharing, onViewSharing, offViewSharing } = roomSlice.actions;
 export default roomSlice.reducer;

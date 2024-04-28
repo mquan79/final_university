@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { get } from '../services/apiCustomer';
 import * as ENV from '../env';
-import { Box } from '@mui/material'
+import { Box, TextField, Button } from '@mui/material';
 const SERVER_URL = `http://${ENV.env.ipv4}:5000`;
 
 const ConferenceRecordScreen = () => {
@@ -10,8 +10,11 @@ const ConferenceRecordScreen = () => {
     const [users, setUsers] = useState([]);
     const [topics, setTopics] = useState([]);
     const [viewVideo, setViewVideo] = useState(null);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const messagesStartRef = useRef(null);
-    const fileFilter = files.filter(video => video.startsWith("record_")).reverse();
+    const fileFilter = files.filter((video) => video.startsWith("record_")).reverse();
+
     const fetchData = async () => {
         try {
             const result = await get('getFiles');
@@ -58,68 +61,97 @@ const ConferenceRecordScreen = () => {
             .catch(error => console.error('Download failed:', error));
     }
 
-    const handleViewVideo = async(file) => {
+    const handleViewVideo = async (file) => {
         await setViewVideo(null)
-        setViewVideo(file);    
+        setViewVideo(file);
         if (messagesStartRef.current) {
             messagesStartRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }
 
+    const handleStartDateChange = (event) => {
+        setStartDate(event.target.value);
+    };
+
+    const handleEndDateChange = (event) => {
+        setEndDate(event.target.value);
+    };
+
     return (
         <Box style={styles.container} sx={{
             flexGrow: 1,
             overflow: "auto",
-            justifyContent: 'center',
-            textAlignLast: 'center'
-          }}>
+            marginLeft: '50px'
+        }}>
             <h2 style={{
-                color: 'white',
-                fontWeight: 'bold'
-            }}>List of Uploaded Files</h2>
-            <div ref={messagesStartRef}></div>
-            {viewVideo && (
-                <>
-                    <video width="50%" controls>
-                        <source src={`${SERVER_URL}/uploads/${viewVideo}`} type="video/mp4" controls />
-                    </video>
-                    <br />
-                    <button style={styles.button} onClick={() => handleDownload(viewVideo)}>Download</button>
-                </>)}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-evenly'
-            }}>
+                color: 'black',
+                fontWeight: 'bold',
+                marginTop: '20px'
+            }}>LIST VIDEO RECORD</h2>
+            <TextField
+                id="startDate"
+                label="Start Date"
+                type="date"
+                value={startDate}
+                onChange={handleStartDateChange}
+                InputLabelProps={{
+                    shrink: true,
+                }}
+            />
+            <TextField
+                id="endDate"
+                label="End Date"
+                type="date"
+                value={endDate}
+                onChange={handleEndDateChange}
+                InputLabelProps={{
+                    shrink: true,
+                }}
+            />
+            <div ref={messagesStartRef} style={{ display: 'flex', flexDirection: 'column' }}>
+                {viewVideo && (
+                    <>
+                        <video width="50%" controls style={{ margin: '20px 0', alignSelf: 'center' }}>
+                            <source src={`${SERVER_URL}/uploads/${viewVideo}`} type="video/mp4" controls />
+                        </video>
+                        <br />
+                        <button style={{ ...styles.button, backgroundColor: '#084387', alignSelf: 'center' }} onClick={() => handleDownload(viewVideo)}>Download</button>
+                    </>
+                )}
                 {fileFilter && fileFilter.map((file, index) => {
                     const recordInfo = record.find((item) => item.record === file);
                     const user = users.find((user) => user._id === recordInfo.idMember);
                     const topic = topics.find((topic) => topic._id === recordInfo.idTopic);
-                    console.log(user)
+                    const recordDate = new Date(recordInfo.time);
+                    const startDateTime = new Date(startDate).getTime();
+                    const endDateTime = new Date(endDate).getTime();
+                    if ((startDate && recordDate.getTime() < startDateTime) || (endDate && recordDate.getTime() > endDateTime)) {
+                        return null;
+                    }
                     return (
-                        <div key={index}>
-                            <video id={index} width="200" controls>
-                                <source src={`${SERVER_URL}/uploads/${file}`} type="video/mp4"  controls/>
+                        <div key={index} style={{ margin: '20px', display: 'flex', borderBottom: 'solid 1px grey', padding: '10px' }}>
+                            <video width="200" controls>
+                                <source src={`${SERVER_URL}/uploads/${file}`} type="video/mp4" controls />
                             </video>
-                            <button onClick={() => handleViewVideo(file)}>Xem video</button>
-                            <button onClick={() => handleDownload(file)}>Tải xuống</button>
-                            <div>
-                                {recordInfo && (
-                                    <>
-                                        <div>
-                                            <strong>{recordInfo.record}</strong>
-                                            <br></br>
-                                            Create User: {user ? user.name : 'Unknow'}
-                                            <br></br>
-                                            Topic: {topic.nameTopicGroup}
-                                            <br></br>
-                                            <small>{formattedTime.format(new Date(recordInfo.time))}</small>
-                                        </div>
-                                    </>
-                                )}
-                                {/* <div>{formattedDuration}</div> */}
+                            <div style={{ marginLeft: '100px'}}>
+                                <button style={{ ...styles.button, backgroundColor: '#084387' }} onClick={() => handleViewVideo(file)}>Xem video</button>
+                                <button style={{ ...styles.button, backgroundColor: '#084387' }} onClick={() => handleDownload(file)}>Tải xuống</button>
+                                <div>
+                                    {recordInfo && (
+                                        <>
+                                            <div>
+                                                <strong>{recordInfo.record}</strong>
+                                                <br />
+                                                Create User: {user ? user.name : ''}
+                                                <br />
+                                                Topic: {topic ? topic.nameTopicGroup : ''}
+                                                <br />
+                                                <small>{formattedTime.format(new Date(recordInfo.time))}</small>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
-
-                            <br></br>
                         </div>
                     )
                 })}
@@ -130,65 +162,21 @@ const ConferenceRecordScreen = () => {
 
 const styles = {
     container: {
-      backgroundImage: `url(${SERVER_URL}/uploads/backgroud1.jpg)`,
-      backgroundSize: 'cover',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      height: '100vh',
-      maxWidth: '100%',
-      overflow: 'hidden'
-    },
-    input: {
-      margin: '5px',
-      width: '320px'
-    },
-    icon: {
-      fontSize: '100px',
-      backgroundColor: 'white',
-      position: 'absolute',
-      top: '-50px',
-      right: '175px',
-      color: '#084387',
-      borderRadius: '60px'
-    },
-    formContainer: {
-      position: 'relative',
-      backgroundColor: 'white',
-      padding: '50px',
-      borderRadius: '20px',
-      width: '350px',
-      boxShadow: '0 0 10px 10px #0B6AB0',
-      textAlign: 'center'
+        height: '100vh',
+        maxWidth: '100%',
+        overflow: 'auto'
     },
     button: {
-      backgroundImage: `url(${SERVER_URL}/uploads/button.png)`,
-      backgroundSize: 'cover',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      fontWeight: 'bold',
-      padding: '20px',
-      color: 'white'
-    },
-    registerLink: {
-      fontSize: '13px',
-      marginTop: '10px'
-    },
-  
-    registerButton: {
-      cursor: 'pointer',
-      fontSize: '13px'
-    },
-  
-    header: {
-      backgroundImage: `url(${SERVER_URL}/uploads/backgroud.jpg)`,
-      backgroundSize: 'cover',
-      backgroundRepeat: 'none',
-      WebkitBackgroundClip: 'text',
-      backgroundClip: 'text',
-      color: 'transparent',
-      fontWeight: 'bolder'
+        fontWeight: 'bold',
+        padding: '10px 20px',
+        color: 'white',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        transition: 'background-color 0.3s',
+        border: 'none',
+        marginRight: '10px',
+        backgroundColor: '#0950CD'
     }
-  
-  };
+};
 
 export default ConferenceRecordScreen;

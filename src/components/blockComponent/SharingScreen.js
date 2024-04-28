@@ -1,139 +1,103 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useCookies } from 'react-cookie'
+import { useCookies } from 'react-cookie';
 import Peer from 'peerjs';
 import io from 'socket.io-client';
 import * as ENV from '../../env';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 const SERVER_URL = `http://${ENV.env.ipv4}:8000`;
-const SharingScreen = ({ userSharing }) => {
-    const videoRef = useRef(null);
-    const [cookies, setCookie] = useCookies(['user']);
-    const socket = useRef(null);
-    const peer = new Peer();
-    const [peerId, setPeerId] = useState(null)
-    const [onlineUsers, setOnlineUsers] = useState([]);
-    const idTopic = useSelector((state) => state.group.topic);
-    const [localStream, setLocalStream] = useState(null);
 
+const SharingScreen = () => {
+    const videoRef = useRef(null);
+    const [cookies] = useCookies(['user']);
+    const [stream, setStream] = useState(null);
+    const socket = useRef(null);
+    const peer = useRef(null);
+    const idTopic = useSelector((state) => state.group.topic);
+    const sharing = useSelector((state) => state.room.sharing);
+    const viewSharing = useSelector((state) => state.room.viewSharing);
 
     useEffect(() => {
         socket.current = io(SERVER_URL);
 
-        const initializePeer = () => {
-            console.log('CONNECT')
-            peer.on('open', (id) => {
-                socket.current.emit('Join sharing', { id: cookies.user._id, name: cookies.user.name, peerId: id, idTopic: `${idTopic}-sharing` });
-                setPeerId(id);
-            });
+        peer.current = new Peer();
 
-            peer.on('call', (call) => {
-                openStream().then((stream) => {
-                    call.answer(stream);
+        const initializePeer = async () => {
+            try {
+                await peer.current.on('open', (id) => {
+                    if (sharing) {
+                        socket.current.emit('Create sharing', { id: cookies.user._id, name: cookies.user.name, peerId: id, idTopic: idTopic });
+                        console.log('Create');
+                        openStream().then((stream) => {
+                            setStream(stream)
+                            if (videoRef.current) {
+                                videoRef.current.srcObject = stream;
+                            }
+                        });
+                    } else {
+                        socket.current.emit('Join sharing', { id: cookies.user._id, name: cookies.user.name, peerId: id, idTopic: idTopic, idHost: viewSharing });
+                        console.log('Join');
+                    }
                 });
-            });
+            } catch (error) {
+                console.error('Error initializing Peer:', error);
+            }
         };
 
         initializePeer();
 
-        socket.current.on('List online sharing', (arrUser) => {
-            console.log(arrUser)
-            if (Array.isArray(arrUser)) {
-                const arrFilter = arrUser.filter((user) => user.idTopic === `${idTopic}-sharing` && user.peerId !== peerId);
-                setOnlineUsers(arrFilter);
-            } else {
-                console.error('List online is not an array:', arrUser);
-            }
-        });
-
-        socket.current.on('New user sharing', async (user) => {
-            console.log('ADDD')
-            if (user.idTopic === `${idTopic}-sharing`) {
-                setOnlineUsers((prevArray) => [...prevArray, user])
-            }
-        });
-
-        socket.current.on('OFF Conference', (data) => {
-            setOnlineUsers((prevUsers) => prevUsers.filter((user) => user.peerId !== data.peerId));
-        });
-
-        const initCallUser = () => {
-            openStream().then((stream) => {
-                if (!localStream) {
-                    setLocalStream(stream);
-                    if (userSharing === cookies.user._id) {
-                        playStream('video', stream)
-                    }
-                }
-            });
-        };
-
-        initCallUser();
-
-
         return () => {
             socket.current.disconnect();
-            if (peer) {
-                peer.disconnect();
+            if (peer.current) {
+                peer.current.disconnect();
             }
         };
+    }, [idTopic, sharing, viewSharing, cookies.user._id, cookies.user.name]);
+
+    useEffect(() => {
+        peer.current.on('call', (call) => {
+            console.log('Incoming call:', call);
+            if (stream) {
+                call.answer(stream);
+            } else {
+                console.error('Stream is null. Cannot answer the call.');
+            }
+        });
+    }, [stream]);
+    
+
+    useEffect(() => {
+        socket.current.on('Host sharing', (user) => {
+            openVideo().then((stream) => {
+                const call = peer.current.call(user.peerId, stream);
+                call.on('stream', (remoteStream) => {
+                    console.log(remoteStream);
+                    videoRef.current.srcObject = remoteStream;
+                });
+            }).catch(error => console.error('Error opening video:', error));
+        });
     }, []);
 
-    const openStream = async () => {
+    const openVideo = async () => {
         try {
-            if (userSharing === cookies.user._id) {
-                var stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            } else {
-                console.log('Cô')
-                var stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-            }
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
             return stream;
         } catch (error) {
-            console.error(error);
+            console.error('Error accessing camera:', error);
         }
     };
 
-    const playStream = (idVideoTag, stream) => {
-        const video = document.getElementById(idVideoTag);
-        if (video) {
-            video.srcObject = stream;
-
-            video.addEventListener('canplay', () => {
-                try {
-                    video.play();
-                } catch (e) {
-                    console.error(e);
-                }
-            });
+    const openStream = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: { mediaSource: 'screen' } });
+            return stream;
+        } catch (error) {
+            console.error('Error accessing screen:', error);
         }
     };
 
     return (
-        <>
-            {userSharing && userSharing === cookies.user._id ? (
-                <video id="video" ref={videoRef} muted width="60%" height="95%" autoPlay={true} style={{ borderRadius: '10px', objectFit: 'cover', border: 'solid 1px grey' }} />
-            ) : (
-                <>
-                    {onlineUsers && (
-                        (() => {
-                            const user = onlineUsers.find((e) => e.id === userSharing)
-                            const call = peer.call(user.peerId, localStream);
-                            call.on('stream', (remoteStream) => {
-                                const videoElement = document.getElementById('videoRemote');
-                                if (videoElement) {
-                                    playStream('videoRemote', remoteStream);
-                                }
-                            });
-                            return (
-                                <video id="videoRemote" muted width="60%" height="95%" autoPlay={true} style={{ borderRadius: '10px', objectFit: 'cover', border: 'solid 1px grey' }} />
-                            )
-                        })
-                    )}
-                </>
-            )}
-        </>
-    )
+        <video id="video" ref={videoRef} muted width="60%" height="95%" autoPlay style={{ borderRadius: '10px', objectFit: 'cover', border: 'solid 1px grey' }} />
+    );
+};
 
-}
-
-
-export default SharingScreen
+export default SharingScreen;

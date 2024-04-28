@@ -97,17 +97,17 @@ const RecordComponent = ({ setIsRecord }) => {
 
         {!recording && !recordedVideoURL && (
           <IconButton onClick={startRecordingScreen}>
-            <FeaturedVideoIcon style={{ ...styles.button, backgroundColor: 'white' }} />
+            <FeaturedVideoIcon style={{ ...styles.button, backgroundColor: '#0950CD' }} />
           </IconButton>
         )}
         {recording && (
           <IconButton onClick={stopRecordingScreen}>
-            <CancelPresentationIcon style={{ ...styles.button, backgroundColor: 'white' }} />
+            <CancelPresentationIcon style={{ ...styles.button, backgroundColor: '#0950CD' }} />
           </IconButton>
         )}
         {recordedVideoURL && (
           <IconButton onClick={downloadRecordedVideo}>
-            <DownloadIcon style={{ ...styles.button, backgroundColor: 'white' }} />
+            <DownloadIcon style={{ ...styles.button, backgroundColor: '#0950CD' }} />
           </IconButton>
         )}
       </div>

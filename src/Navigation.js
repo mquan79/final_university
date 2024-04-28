@@ -13,10 +13,10 @@ import SettingScreen from './screens/SettingScreen';
 import SpeechToText from './components/blockComponent/SpeechToText';
 import CallVideo from './screens/CallVideo'
 import Header from './components/blockComponent/Header';
+import NotFoundPage from './screens/NotFoundPage'
 import FetchData from './FetchData';
 const Navigation = () => {
     const [cookies, removeCookie] = useCookies(['user']);
-
     return (
         <Router>
             <div>
@@ -30,25 +30,22 @@ const Navigation = () => {
                             <Route path='/register' element={<Navigate to="/" />} />
                             <Route path="/conference" element={<ConferenceRoom />} />
                             <Route path="/test" element={<TestScreen />} />
-                            <Route path="/record" element={<ConferrenceRecordScreen />} />
                             <Route path='/room' element={<RoomChatScreen />} />
                             <Route path="/color" element={<ColorScreen />} />
                             <Route path="/setting" element={<SettingScreen />} />
-                            <Route path="/speech" element={<SpeechToText />} />
                             <Route path="/call" element={<CallVideo />} />
-
+                            <Route path="*" element={<NotFoundPage />} />
                         </Routes>
                     </>
                 ) : (
                     <>
-                        {/* <Header isLogin={false}/> */}
                         <Routes>
                             <Route path="/login" element={<LoginScreen />} />
                             <Route path="/" element={<Navigate to="/login" />} />
                             <Route path='/register' element={<RegisterScreen />} />
                             <Route path="/test" element={<TestScreen />} />
                             <Route path="/color" element={<ColorScreen />} />
-                            <Route path="/setting" element={<Navigate to="/login" />} />
+                            <Route path="*" element={<NotFoundPage />} />
                         </Routes>
                     </>
                 )}

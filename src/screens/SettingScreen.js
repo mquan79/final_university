@@ -1,83 +1,77 @@
-import { Container } from '@mui/material'
-import React from 'react'
+import React, { useState } from 'react';
+import InfoUserSetting from '../components/blockComponent/InfoUserSetting'
+import ConferenceRecordScreen from './ConferrenceRecordScreen'
 import { useCookies } from 'react-cookie'
-import { useNavigate } from 'react-router-dom'
-import socket from '../components/logicComponent/socketId'
-const SettingScreen = () => {
-  const [cookies, removeCookie] = useCookies(['user']);
-  const navigate = useNavigate()
-  const logout = () => {
-    socket.emit('Logout', cookies.user)
-    removeCookie('user', null);
-    navigate('/login')
-    window.location.reload();
-  };
+const ProfileTab = ({ label, selected, onClick }) => {
   return (
-    <Container maxWidth="sm" style={styles.container}>
-      <button onClick={() => navigate('/record')}>RECORD</button>
-      <button onClick={logout}>Logout</button>
-    </Container>
-  )
-}
+    <div
+      style={{
+        padding: '10px',
+        backgroundColor: selected ? '#eee' : '#fff',
+        cursor: 'pointer',
+        borderBottom: '1px solid #ccc',
 
-const styles = {
-  container: {
-    height: '100vh',
-    maxWidth: '100%',
-    overflow: 'hidden',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  input: {
-    margin: '5px',
-    width: '320px'
-  },
-  icon: {
-    fontSize: '100px',
-    backgroundColor: 'white',
-    position: 'absolute',
-    top: '-50px',
-    right: '175px',
-    color: '#084387',
-    borderRadius: '60px'
-  },
-  formContainer: {
-    position: 'relative',
-    backgroundColor: 'white',
-    padding: '50px',
-    borderRadius: '20px',
-    width: '350px',
-    boxShadow: '0 0 10px 10px #0B6AB0',
-    textAlign: 'center'
-  },
-  button: {
-    //   backgroundImage: `url(${SERVER_URL}/uploads/button.png)`,
-    //   backgroundSize: 'cover',
-    //   backgroundRepeat: 'no-repeat',
-    //   backgroundPosition: 'center',
-    fontWeight: 'bold'
-  },
-  registerLink: {
-    fontSize: '13px',
-    marginTop: '10px'
-  },
-
-  registerButton: {
-    cursor: 'pointer',
-    fontSize: '13px'
-  },
-
-  header: {
-    //   backgroundImage: `url(${SERVER_URL}/uploads/backgroud.jpg)`,
-    //   backgroundSize: 'cover',
-    //   backgroundRepeat: 'none',
-    //   WebkitBackgroundClip: 'text',
-    backgroundClip: 'text',
-    color: 'transparent',
-    fontWeight: 'bolder'
-  }
-
+      }}
+      onClick={onClick}
+    >
+      {label}
+    </div>
+  );
 };
 
-export default SettingScreen
+const ProfileContent = ({ tab }) => {
+  const [cookies, removeCookie] = useCookies(['user']);
+  if (tab === 'info') {
+    return <InfoUserSetting id={cookies.user._id} />;
+  } else if (tab === 'settings') {
+    return <div>Cài đặt</div>;
+  } else if (tab === 'channel') {
+    return <div>Channel</div>;
+  } else if (tab === 'record') {
+    return <ConferenceRecordScreen />;
+  }
+  return null;
+};
+
+const SettingScreen = () => {
+  const [selectedTab, setSelectedTab] = useState('info');
+
+  const handleTabClick = (tab) => {
+    setSelectedTab(tab);
+  };
+
+  return (
+    <div style={{ display: 'flex', backgroundColor: 'white', height: '100vh' }}>
+      <div style={{ width: '200px', borderRight: '1px solid #ccc' }}>
+        <div style={{
+          marginTop: '50px'
+        }}></div>
+        <ProfileTab
+          label="Thông tin cá nhân"
+          selected={selectedTab === 'info'}
+          onClick={() => handleTabClick('info')}
+        />
+        {/* <ProfileTab
+          label="Cài đặt"
+          selected={selectedTab === 'settings'}
+          onClick={() => handleTabClick('settings')}
+        /> */}
+        {/* <ProfileTab
+          label="Danh sách channel"
+          selected={selectedTab === 'channel'}
+          onClick={() => handleTabClick('channel')}
+        /> */}
+        <ProfileTab
+          label="Video đã lưu"
+          selected={selectedTab === 'record'}
+          onClick={() => handleTabClick('record')}
+        />
+      </div>
+      <div style={{ flex: 1 }}>
+        <ProfileContent tab={selectedTab} />
+      </div>
+    </div>
+  );
+};
+
+export default SettingScreen;

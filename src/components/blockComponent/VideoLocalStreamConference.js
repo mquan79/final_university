@@ -61,7 +61,8 @@ const VideoLocalStreamConference = ({ socket, off, size, peerId, setIsRecord, is
                     borderRadius: '10px',
                     display: !video ? 'block' : 'none',
                     alignContent: 'center',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    position: 'relative'
                 }}>
                     <img
                         src={`${SERVER_URL_IMAGE}/uploads/${cookies.user.avatar ? cookies.user.avatar : 'user.png'}`}
@@ -69,16 +70,28 @@ const VideoLocalStreamConference = ({ socket, off, size, peerId, setIsRecord, is
                         style={{
                             width: '80px',
                             height: '80px',
-                            borderRadius: '50%'
-
+                            borderRadius: '50%',
+                            // filter: 'brightness(50%)'
                         }}
                     />
+                    {/* <button style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.5)', // Màu nền cho nút button
+                        border: 'none',
+                        borderRadius: '5px', // Bo tròn góc cho nút button
+                        padding: '10px 20px', // Kích thước nút button
+                        boxShadow: '0 0 10px rgba(0, 0, 0, 0.3)', // Đổ bóng cho nút button
+                        zIndex: '1', // Đặt nút button lên trên hình ảnh
+                    }}>Xem stream</button> */}
                 </div>
             </div>
             <div style={{
                 justifySelf: 'center'
             }}>
-                <ButtonConferenceRoom setAudio={handleAudio} setVideo={handleVideo} video={video} audio={audio} size={size} off={handleOff} setIsRecord={setIsRecord} isSharing={isSharing} setIsSharing={setIsSharing} setUserSharing={setUserSharing} userSharing={userSharing}/>
+                <ButtonConferenceRoom setAudio={handleAudio} setVideo={handleVideo} peerId={peerId} video={video} audio={audio} size={size} off={handleOff} setIsRecord={setIsRecord} isSharing={isSharing} setIsSharing={setIsSharing} setUserSharing={setUserSharing} userSharing={userSharing} />
             </div>
         </>
     )

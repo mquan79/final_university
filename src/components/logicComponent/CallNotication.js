@@ -8,7 +8,7 @@ import { IconButton, Button } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import CallIcon from '@mui/icons-material/Call';
 import { setTopic } from '../../store/Slice/groupSlice';
-import { onConference, onCall, setRoomCall } from '../../store/Slice/roomSlice';
+import { onConference, onCall, setRoomCall, setRoom } from '../../store/Slice/roomSlice';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 const SERVER_URL = `http://${ENV.env.ipv4}:5000`;
 
@@ -71,6 +71,8 @@ const CallNotication = () => {
     };
 
     const handleOnCall = (data, key) => {
+        const dataCut = data.idRoom.split('-')
+        dispatch(setRoom(dataCut[0]))
         dispatch(setRoomCall(data.idRoom))
         dispatch(onCall())
         closeSnackbar(key)
@@ -85,7 +87,7 @@ const CallNotication = () => {
         if (!inConference) {
             if (member && group && user && !statusConference) {
                 const find = member.find((item) => item.idMember === cookies.user._id && item.idGroup === data.idGroup);
-                if (!isInPage) {
+                if (!isInPage && find) {
                     document.title = 'Bạn có cuộc gọi';
                 } else {
                     document.title = 'CONFERENCE APP';
@@ -137,55 +139,56 @@ const CallNotication = () => {
     };
 
     const handleCall = (data) => {
-        const dataCut = data.idRoom.split('-')
-        if (!inCall) {
-            socket.emit('No Call', data)
-            if (user) {
-                const find = dataCut[1] === cookies.user._id
-                if (!isInPage) {
-                    document.title = 'Bạn có cuộc gọi';
-                } else {
-                    document.title = 'CONFERENCE APP';
+        if (cookies.user) {
+            if (!inCall && data.user === cookies.user._id) {
+                socket.emit('No Call', data, inCall, statusCall)
+                if (user) {
+                    if (!isInPage) {
+                        document.title = 'Bạn có cuộc gọi';
+                    } else {
+                        document.title = 'CONFERENCE APP';
+                    }
+                    if (data.user === cookies.user._id) {
+                        enqueueSnackbar(
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <img
+                                    src={`${SERVER_URL}/uploads/${getUserById(data.userCall).avatar ? getUserById(data.userCall).avatar : 'user.png'}`}
+                                    alt="User Avatar"
+                                    width="40"
+                                    height="40"
+                                    style={{ borderRadius: "45px", marginRight: "8px" }}
+                                />
+                                <div style={{ whiteSpace: 'pre-line' }}>
+                                    <strong>Bạn có cuộc gọi từ {getUserById(data.userCall).name}</strong>
+                                </div>
+                            </div>,
+                            {
+                                variant: 'common',
+                                autoHideDuration: null,
+                                action: (key) => (
+                                    <React.Fragment>
+                                        <Button color="inherit" size="small" onClick={() => handleOnCall(data, key)}>
+                                            <CallIcon style={{ borderRadius: '50%', background: '#0950CD', padding: '15px', fontSize: '15px' }} />
+                                        </Button>
+                                        <IconButton
+                                            aria-label="close"
+                                            color="inherit"
+                                            onClick={() => handleNoCalling(data, key)}
+                                        >
+                                            <CallEndIcon style={{ borderRadius: '50%', background: 'red', padding: '15px', fontSize: '15px' }} />
+                                        </IconButton>
+                                    </React.Fragment>
+                                ),
+                            }
+                        );
+                    }
                 }
-                if (find) {
-                    enqueueSnackbar(
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <img
-                                src={`${SERVER_URL}/uploads/${getUserById(data.user).avatar}`}
-                                alt="User Avatar"
-                                width="40"
-                                height="40"
-                                style={{ borderRadius: "45px", marginRight: "8px" }}
-                            />
-                            <div style={{ whiteSpace: 'pre-line' }}>
-                                <strong>Bạn có cuộc gọi từ {getUserById(data.user).name}</strong>
-                            </div>
-                        </div>,
-                        {
-                            variant: 'common',
-                            autoHideDuration: null,
-                            action: (key) => (
-                                <React.Fragment>
-                                    <Button color="inherit" size="small" onClick={() => handleOnCall(data, key)}>
-                                        <CallIcon style={{ borderRadius: '50%', background: '#0950CD', padding: '15px', fontSize: '15px' }} />
-                                    </Button>
-                                    <IconButton
-                                        aria-label="close"
-                                        color="inherit"
-                                        onClick={() => handleNoCalling(data, key)}
-                                    >
-                                        <CallEndIcon style={{ borderRadius: '50%', background: 'red', padding: '15px', fontSize: '15px' }} />
-                                    </IconButton>
-                                </React.Fragment>
-                            ),
-                        }
-                    );
-                }
+            } else if (data.user === cookies.user._id && inCall ) {
+                socket.emit('Online Call', data)
+            } else {
+                return;
             }
-        } else {
-            socket.emit('Online Call', data)
         }
-
     };
 
 

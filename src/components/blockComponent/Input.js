@@ -144,7 +144,7 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
                 }}
 
                 InputProps={{
-                    style: { color: 'white' },
+                    style: { color: '#0950CD' },
                     startAdornment: file && (
                         <InputAdornment position="start">
                             {(['jpg', 'png'].includes(typeOfFile)) ? (
@@ -167,19 +167,19 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
             />
             <label htmlFor="icon-button-file">
                 <IconButton component="span">
-                    <PhotoCamera style={{ color: 'white' }} />
+                    <PhotoCamera style={{ color: '#0950CD' }} />
                 </IconButton>
             </label>
             <IconButton onClick={handleSend}>
-                <SendIcon style={{ color: 'white' }} />
+                <SendIcon style={{ color: '#0950CD' }} />
             </IconButton>
             {!replyMess && (
                 <IconButton onClick={() => dispatch(onConference())}>
-                    <VideoCameraFrontIcon style={{ color: 'white' }} />
+                    <VideoCameraFrontIcon style={{ color: '#0950CD' }} />
                 </IconButton>
             )}
             <IconButton onClick={handleOpenSTT}>
-                <MicIcon style={{ color: 'white' }} />
+                <MicIcon style={{ color: '#0950CD' }} />
             </IconButton>
             {replyMess && <div onClick={clearReplyMess}><CloseIcon /></div>}
         </div>

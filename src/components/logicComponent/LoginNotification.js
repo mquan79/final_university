@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import socket from './socketId';
 import { useSnackbar } from 'notistack';
 import { IconButton, Button } from '@mui/material';
-
+import { useCookies } from 'react-cookie';
 const LoginNotification = () => {
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-
+    const [cookies, setCookie] = useCookies(['user']);
     const handleButtonClick = (data, key) => {
         socket.emit('Login Success', data)
         socket.emit('Login logout')

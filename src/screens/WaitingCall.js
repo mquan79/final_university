@@ -92,14 +92,14 @@ const WaitingCall = () => {
   }
 
   const handleOff = () => {
-    socket.emit('No Call Off', { user: cookies.user._id })
+    socket.emit('No Call Off', { user: cookies.user._id})
     dispatch(offConference());
     dispatch(offCall());
     dispatch(removeTopic());
     dispatch(removeGroup());
   }
 
-  const handleOffCall = (data) => {
+  const handleOffCall = async(data) => {
     if (data.idRoom === `${cookies.user._id}-${idChatRoom}`) {
       enqueueSnackbar('Gọi thất bại vì người dùng không bắt máy!!!', { variant: 'error', autoHideDuration: 1000 });
       dispatch(offConference());
@@ -109,7 +109,7 @@ const WaitingCall = () => {
     }
   }
 
-  const handleOffCalling = (data) => {
+  const handleOffCalling = async(data) => {
     if (data.user === idChatRoom) {
       enqueueSnackbar('Người dùng đã cúp máy!!!', { variant: 'error', autoHideDuration: 1000 });
       dispatch(offConference());
@@ -167,6 +167,7 @@ const WaitingCall = () => {
     <div style={{
       height: '100vh',
       display: 'grid',
+      backgroundColor: '#f5f5f5'
     }}>
       <div>{topic && topic.nameTopicGroup}</div>
       <div style={{

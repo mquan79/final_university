@@ -148,10 +148,11 @@ const LoginScreen = () => {
 
 const styles = {
     container: {
-        backgroundImage: `url(${SERVER_URL}/uploads/backgroud.jpg)`,
-        backgroundSize: 'cover',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
+        // backgroundImage: `url(${SERVER_URL}/uploads/backgroud.jpg)`,
+        // backgroundSize: 'cover',
+        // backgroundRepeat: 'no-repeat',
+        // backgroundPosition: 'center',
+        
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
@@ -177,14 +178,15 @@ const styles = {
         padding: '50px',
         borderRadius: '20px',
         width: '350px',
-        boxShadow: '0 0 10px 10px #0B6AB0',
+        boxShadow: '0 0 10px 5px #f5f5f5',
         textAlign: 'center'
     },
     button: {
-        backgroundImage: `url(${SERVER_URL}/uploads/button.png)`,
-        backgroundSize: 'cover',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
+        // backgroundImage: `url(${SERVER_URL}/uploads/button.png)`,
+        // backgroundSize: 'cover',
+        // backgroundRepeat: 'no-repeat',
+        // backgroundPosition: 'center',
+        backgroundColor: '#084387',
         fontWeight: 'bold'
     },
     registerLink: {
@@ -198,12 +200,7 @@ const styles = {
     },
 
     header: {
-        backgroundImage: `url(${SERVER_URL}/uploads/backgroud.jpg)`,
-        backgroundSize: 'cover', 
-        backgroundRepeat: 'none',
-        WebkitBackgroundClip: 'text', 
-        backgroundClip: 'text', 
-        color: 'transparent',
+        color: '#084387',
         fontWeight: 'bolder'
     }
     

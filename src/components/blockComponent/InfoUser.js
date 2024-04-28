@@ -1,66 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Card, CardContent, CardMedia, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import SettingsIcon from '@mui/icons-material/Settings';
+import { Box, Typography } from '@mui/material';
 import { get } from '../../services/apiCustomer';
-import { useCookies } from 'react-cookie';
 import * as ENV from '../../env';
-const SERVER_URL = `http://${ENV.env.ipv4}:5000`
-export default function InfoUser({ }) {
-    const navigate = useNavigate();
-    const [users, setUsers] = useState([]);
-    const [cookies, removeCookie] = useCookies(['user']);
+import { Tooltip, Button } from '@mui/material';
+import { FileCopy } from '@mui/icons-material';
+import CopyToClipboard from 'react-copy-to-clipboard';
+const SERVER_URL = `http://${ENV.env.ipv4}:5000`;
 
-    const fetchData = async () => {
-        try {
-            const res = await get('users');
-            setUsers(res)
-        } catch (e) {
-            console.error(e)
-        }
-    }
+export default function InfoUser({ id }) {
+    const [user, setUser] = useState(null);
+    const [copied, setCopied] = React.useState(false);
 
+    const handleCopy = () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500); // Reset copied state after 1.5s
+    };
     useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await get('users');
+                setUser(res.find(user => user._id === id));
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
         fetchData();
-    }, [])
-    const user = users.find((user) => user._id === cookies.user._id)
-    console.log(user)
+    }, [id]);
+
     return (
-        <Card sx={{
+        <Box sx={{
             display: 'flex',
-            height: '60px',
             alignItems: 'center',
-            paddingLeft: '15px',
-            paddingRight: '10px',
-            backgroundColor: '#0F171B',
-            justifyContent: 'space-between',
-            alignSelf: 'center'
         }}>
             {user && (
                 <>
-                    <CardMedia
-                        component="img"
-                        sx={{
-                            width: '50px',
-                            height: '50px',
-                            borderRadius: '90px',
-                            padding: '0px',
-                        }}
-                        image={`${SERVER_URL}/uploads/${user.avatar ? user.avatar : 'user.png'}` }
+                    <img
+                        src={`${SERVER_URL}/uploads/${user.avatar || 'user.png'}`}
                         alt="Avatar"
+                        style={{
+                            width: '60px',
+                            height: '60px',
+                            marginRight: '15px',
+                            borderRadius: '20px'
+                        }}
                     />
-                    <Box sx={{ padding: '0px' }}>
-                        <CardContent sx={{ paddingBottom: '0px', alignItems: 'center', }}>
-                            <Typography variant="subtitle1" color="white" component="div" style={{ padding: '0px' }}>
-                                {user.name}
-                                <SettingsIcon style={{ cursor: 'pointer', marginLeft: '25px' }} onClick={() => navigate('/setting')} />
-                            </Typography>
-
-                        </CardContent>
-                    </Box>
+                    <Typography variant="subtitle1" color="black">
+                        {user.name}
+                        <div></div>
+                        ID: {user._id}
+                        <CopyToClipboard text={user._id} onCopy={handleCopy}>
+                            <Tooltip title={copied ? "Copied!" : "Copy ID"}>
+                                <Button size="small" style={{ marginLeft: "4px", minWidth: 0 }}>
+                                    <FileCopy sx={{ color: 'grey', fontSize: '20px' }} />
+                                </Button>
+                            </Tooltip>
+                        </CopyToClipboard>
+                    </Typography>
                 </>
             )}
-
-        </Card>
+        </Box>
     );
 }

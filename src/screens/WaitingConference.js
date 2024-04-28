@@ -73,8 +73,9 @@ const WaitingConference = () => {
     <div style={{
       height: '100vh',
       display: 'grid',
+      backgroundColor: '#f5f5f5'
     }}>
-      <div>{group && group.nameGroup} / #{topic && topic.nameTopicGroup}</div>
+      <div style={{ color: '#0950CD'}}>{group && group.nameGroup} / #{topic && topic.nameTopicGroup}</div>
       <div style={{
         justifySelf: 'center'
       }}>
