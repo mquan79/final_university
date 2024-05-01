@@ -4,6 +4,7 @@ import { add } from '../../services/apiCustomer';
 import { useCookies } from 'react-cookie';
 import { useSnackbar } from 'notistack';
 import CloseIcon from '@mui/icons-material/Close';
+import socket from '../logicComponent/socketId'
 const DialogCustom = ({ open, handleClose, fetchData, groups }) => {
   const [cookies, removeCookie] = useCookies(['user']);
   const { enqueueSnackbar } = useSnackbar();
@@ -37,7 +38,7 @@ const DialogCustom = ({ open, handleClose, fetchData, groups }) => {
     } catch (e) {
       console.error(e)
     }
-
+    socket.emit('Create threads')
     fetchData();
     handleClose();
   }

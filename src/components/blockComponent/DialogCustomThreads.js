@@ -5,7 +5,7 @@ import { add } from '../../services/apiCustomer';
 import { useCookies } from 'react-cookie';
 import { useSnackbar } from 'notistack';
 import { useSelector } from 'react-redux';
-
+import socket from '../logicComponent/socketId'
 const DialogCustom = ({ open, handleClose, fetchData }) => {
   const [cookies, removeCookie] = useCookies(['user']);
   const { enqueueSnackbar } = useSnackbar();
@@ -29,6 +29,7 @@ const DialogCustom = ({ open, handleClose, fetchData }) => {
     } catch (e) {
       console.error(e)
     }
+    socket.emit('Create threads')
     handleClose();
     fetchData();
   }
@@ -53,7 +54,7 @@ const DialogCustom = ({ open, handleClose, fetchData }) => {
         }}
         onClick={handleClose}
       />
-      <DialogTitle>Create Channel</DialogTitle>
+      <DialogTitle>Create Threads</DialogTitle>
       <DialogContent>
         <TextField
           margin="dense"

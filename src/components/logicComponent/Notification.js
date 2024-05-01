@@ -79,6 +79,7 @@ const Notification = () => {
     };
 
     const handleMessage = (data) => {
+        console.log(data)
         if (member && group && user) {
             const find = member.find((item) => item.idMember === cookies.user._id && item.idGroup === data.receiverChannel)
             if (find && data.receiverGroup !== idTopic) {

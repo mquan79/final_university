@@ -79,6 +79,7 @@ const FetchData = () => {
 
     useEffect(() => {
         socket.on('fetch friend', () => fetchFriend())
+        socket.on('Create threads', fetchTopic)
     }, [])
 
     useEffect(() => {

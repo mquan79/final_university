@@ -75,7 +75,7 @@ const ChatScreen = () => {
                 <div ref={messagesEndRef} />
             </Box>
             <Box sx={{ p: 2 }} style={{ display: 'inline-flex', padding: '0px' }}>
-                {!replyMess && <Input fetchData={fetchMessage} clearReplyMess={() => setReplyMess(null)} />}
+                <Input fetchData={fetchMessage} clearReplyMess={() => setReplyMess(null)} />
             </Box>
         </Box>
     );

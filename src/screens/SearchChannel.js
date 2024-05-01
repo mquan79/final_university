@@ -6,6 +6,7 @@ import { useSnackbar } from 'notistack';
 import { add } from '../services/apiCustomer';
 import { useCookies } from 'react-cookie'
 import { useSelector } from 'react-redux';
+import socket from '../components/logicComponent/socketId';
 const SERVER_URL = `http://${ENV.env.ipv4}:5000`
 
 const SearchChannel = ({ groups, fetchData, groupMembers }) => {
@@ -22,7 +23,7 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
       enqueueSnackbar('Không tìm thấy channel', { variant: 'error', autoHideDuration: 1000 });
       return;
     }
-    const groupFindA = groups.filter((item) => item.nameGroup === urlNameGroup)
+    const groupFindA = groups.filter(e => e.nameGroup.toLowerCase().replace(/[\u0300-\u036f]/g, '').includes(urlNameGroup.toLowerCase().replace(/[\u0300-\u036f]/g, '')));
     if(groupFindA.length === 0) {
       enqueueSnackbar('Không tìm thấy channel', { variant: 'error', autoHideDuration: 1000 });
       setUrlNameGroup('')
@@ -44,6 +45,7 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
         idGroup: idGroup,
         idMember: cookies.user._id
       }, 'groupmembers')
+      socket.emit('Fetch member')
       fetchData();
       setOpen(false)
     } catch (e) {
@@ -90,7 +92,7 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
 
     const user = users.find((user) => user._id === group.hostGroup)
     return (
-      <Card sx={{ maxWidth: '100%', marginBottom: '15px' }}>
+      <Card sx={{ maxWidth: '100%', marginBottom: '15px'}}>
         <CardContent>
           <Typography gutterBottom variant="h5" component="div">
             {group.nameGroup && group.nameGroup}
@@ -133,7 +135,7 @@ const SearchChannel = ({ groups, fetchData, groupMembers }) => {
 
             }}>Search</Button>
           <Box sx={{
-            maxHeight: '100vh',
+            maxHeight: '80vh',
             overflow: "auto",
             scrollbarWidth: 'none', // Ẩn thanh cuộn cho Firefox
             '&::-webkit-scrollbar': {

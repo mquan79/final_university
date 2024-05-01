@@ -3,7 +3,8 @@ import { useSelector } from 'react-redux';
 import { useCookies } from 'react-cookie';
 import * as ENV from '../../env';
 import DialogUser from './DialogUser';
-
+import socket from '../logicComponent/socketId'
+import { useDataFetching } from '../logicComponent/fetchData'
 const SERVER_URL = `http://${ENV.env.ipv4}:5000`;
 
 const ListUserGroup = () => {
@@ -15,6 +16,10 @@ const ListUserGroup = () => {
     const idGroup = useSelector((state) => state.group.group);
     const [open, setOpen] = useState(false);
     const [idView, setIdView] = useState(null);
+    const { fetchMember } = useDataFetching()
+    useEffect(() => {
+        socket.on('Fetch member', fetchMember)
+    }, [])
 
     useEffect(() => {
         if (members && idGroup && cookies) {

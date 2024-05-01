@@ -64,10 +64,6 @@ const DialogQRCode = ({ open, handleClose, id }) => {
     }
   }, [friends, cookies, id]);
 
-  const handleFriendAction = () => {
-    // Xử lý hành động khi nhấn nút tùy thuộc vào stateFriend
-    // Ví dụ: Gửi yêu cầu kết bạn, chấp nhận yêu cầu kết bạn, hủy yêu cầu kết bạn, vv.
-  };
 
   const renderFriendButton = () => {
     switch (stateFriend) {

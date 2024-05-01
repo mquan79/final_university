@@ -4,6 +4,7 @@ import { get } from '../../services/apiCustomer';
 import * as ENV from '../../env';
 import { Tooltip, Button } from '@mui/material';
 import { FileCopy } from '@mui/icons-material';
+import moment from 'moment';
 import CopyToClipboard from 'react-copy-to-clipboard';
 const SERVER_URL = `http://${ENV.env.ipv4}:5000`;
 

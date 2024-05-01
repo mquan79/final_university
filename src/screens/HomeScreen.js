@@ -73,6 +73,10 @@ const HomeScreen = () => {
 
   };
 
+  const getGroupById = (id) => {
+    return groups?.find(e => e._id === id)
+  }
+
   const Logout = () => {
     socket.emit('Logout', cookies.user)
     removeCookie('user', null);
@@ -367,7 +371,7 @@ const HomeScreen = () => {
                   }}
                   elevation={24}
                 >
-                  {nameGroup && nameGroup.nameGroup}
+                  {nameGroup && nameGroup.nameGroup.substring(0, 3)}
                 </ItemGroup>
               </Badge>
 
@@ -471,6 +475,10 @@ const HomeScreen = () => {
               width: `${width * 0.15}px`,
               backgroundColor: '#0950CD',
             }}>
+              <strong style={{
+                padding: '5px',
+                color: 'white'
+              }}>{getGroupById(idGroup)?.nameGroup}</strong>
               {idGroup && (
                 (stateA === 'channel') ? (
                   <>
@@ -563,8 +571,8 @@ const HomeScreen = () => {
                 justifyContent: 'space-evenly'
               }}>
                 {/* <InfoUser /> */}
-                <Button variant="contained" onClick={() => setStateA('threads')} style={{ color: 'black', fontSize: '10px', width: '50%', borderRadius: '0px', backgroundColor: (stateA === 'threads') ? '#fbb700' : '#f5f5f5' }}>Users</Button>
-                <Button variant="contained" onClick={() => setStateA('channel')} style={{ color: 'black', fontSize: '10px', width: '50%', borderRadius: '0px', backgroundColor: (stateA === 'channel') ? '#fbb700' : '#f5f5f5' }}>Channel</Button>
+                <Button variant="contained" onClick={() => setStateA('threads')} style={{ color: 'black', fontSize: '10px', width: '50%', borderRadius: '0px', backgroundColor: (stateA === 'threads') ? '#fbb700' : '#f5f5f5' }}>Members</Button>
+                <Button variant="contained" onClick={() => setStateA('channel')} style={{ color: 'black', fontSize: '10px', width: '50%', borderRadius: '0px', backgroundColor: (stateA === 'channel') ? '#fbb700' : '#f5f5f5' }}>Threads</Button>
               </div>
             </div>
             <div style={{

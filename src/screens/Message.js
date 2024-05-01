@@ -3,8 +3,9 @@ import { useCookies } from 'react-cookie';
 import { get } from '../services/apiCustomer';
 import { useSelector } from 'react-redux';
 import InputDirectMessage from '../components/blockComponent/InputDirectMessage';
+import Input from '../components/blockComponent/Input';
 import socketId from '../components/logicComponent/socketId'
-import { Container, TextField, Button, Grid, Link, Box, Input } from '@mui/material';
+import { Container, TextField, Button, Grid, Link, Box, Input as TextFieldMUI } from '@mui/material';
 import { IconButton } from '@mui/material';
 import ReplyIcon from '@mui/icons-material/Reply';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -19,6 +20,7 @@ const Message = ({ message }) => {
     const [users, setUsers] = useState([]);
     const [cookies] = useCookies(['user']);
     const [replyMess, setReplyMess] = useState(null);
+    const idTopic = useSelector((state) => state.group.topic);
     const idChatRoom = useSelector((state) => state.room.room);
     const messageFilter = messages.filter((mess) => ((mess.receiverUser === idChatRoom && mess.senderUser === cookies.user._id) ||
         (mess.receiverUser === cookies.user._id && mess.senderUser === idChatRoom)) &&
@@ -163,7 +165,7 @@ const Message = ({ message }) => {
             <div style={{ justifyContent: 'end', display: 'flex' }}>
                 {replyMess && replyMess._id === message._id ? (
                     <div style={{ width: '90%' }}>
-                        {replyMess && replyMess._id === message._id ? <InputDirectMessage fetchData={() => fetchData()} replyMess={replyMess} clearReplyMess={() => setReplyMess(null)} /> : <button onClick={() => setReplyMess(message)}>Reply</button>}
+                        {replyMess && replyMess._id === message._id ? idTopic ? <Input fetchData={() => fetchData()} replyMess={replyMess} clearReplyMess={() => setReplyMess(null)} /> : <InputDirectMessage  fetchData={() => fetchData()} replyMess={replyMess} clearReplyMess={() => setReplyMess(null)} /> : <button onClick={() => setReplyMess(message)}>Reply</button>}
                     </div>
                 )
                     : <IconButton onClick={() => setReplyMess(message)}>

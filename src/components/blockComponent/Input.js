@@ -34,7 +34,6 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
                 return;
             }
 
-            console.log('FILE NAME', file.name)
             messageFormat = {
                 senderUser: cookies.user._id,
                 receiverGroup: idTopic,
@@ -62,6 +61,7 @@ const Input = ({ fetchData, replyMess, clearReplyMess }) => {
         setText('');
         clearReplyMess();
         setFile(null);
+        console.log('Message', messageFormat)
         socket.emit('Message', messageFormat);
     };
 

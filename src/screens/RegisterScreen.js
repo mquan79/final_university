@@ -17,7 +17,7 @@ const RegisterScreen = () => {
         password: '',
         avatar: null,
         birthday: new Date().toISOString().split('T')[0],
-        lastTimeConnect: 'now'
+        time: new Date().toISOString().split('T')[0]
     });
     const [rePassword, setRePassword] = useState('');
     const [users, setUsers] = useState([]);
